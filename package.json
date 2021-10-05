@@ -1,0 +1,27 @@
+{
+  "name": "sqs-lambda-api",
+  "version": "1.0.0",
+  "description": "custom lambda to sqs api",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx lamba-local-test -p 3200 -f ./src/index.ts"
+    
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/franbri/SQS-Lambda-api.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/franbri/SQS-Lambda-api/issues"
+  },
+  "homepage": "https://github.com/franbri/SQS-Lambda-api#readme",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.83",
+    "typescript": "^4.4.3"
+  },
+  "dependencies": {
+    "lambaa": "^3.1.3"
+  }
+}
