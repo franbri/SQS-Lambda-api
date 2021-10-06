@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "custom lambda to sqs api",
   "main": "index.js",
+  "local": {
+    "routes": [
+      "GET#/ping",
+      "GET#/pong"
+    ]
+  },
   "scripts": {
-    "test": "npx lamba-local-test -p 3200 -f ./src/index.ts"
-    
+    "serve": "lambda-local -p 3200 -f ./src/index.ts -r $npm_package_local_routes"
   },
   "repository": {
     "type": "git",
@@ -22,6 +27,7 @@
     "typescript": "^4.4.3"
   },
   "dependencies": {
-    "lambaa": "^3.1.3"
+    "lambaa": "^3.1.3",
+    "lamba-local-test": "0.1.0"
   }
 }
