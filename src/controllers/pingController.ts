@@ -11,7 +11,16 @@ export default class pingController {
     public ping(_event: APIGatewayProxyEvent): APIGatewayProxyResult {
         return {
             statusCode: 200,
-            body: "pong",
+            body: "ponggg",
+        }
+    }
+
+
+    @GET("/pong")
+    public pong(_event: APIGatewayProxyEvent): APIGatewayProxyResult {
+        return {
+            statusCode: 200,
+            body: "hello world",
         }
     }
 
