@@ -9,6 +9,8 @@ export default class pingController {
      */
     @GET("/queue/messages/{queueid}")
     public getMessages(_event: APIGatewayProxyEvent): APIGatewayProxyResult {
+
+      
         return {
             statusCode: 200,
             body: "pong",
@@ -17,6 +19,7 @@ export default class pingController {
 
     @POST("/queue/messages/mv/{queueid}")
     public mvMessage(_event: APIGatewayProxyEvent): APIGatewayProxyResult {
+
         return {
             statusCode: 200,
             body: "Retorno mensage",
@@ -25,6 +28,9 @@ export default class pingController {
 
     @DELETE("/queue/messages/rm/{queueid}")
     public rmMessage(_event: APIGatewayProxyEvent): APIGatewayProxyResult {
+
+
+
         return {
             statusCode: 200,
             body: "OK"
@@ -34,6 +40,7 @@ export default class pingController {
 
     @POST("/queue/messages/reinyect/{queueid1}")
     public reInyect(_event: APIGatewayProxyEvent): APIGatewayProxyResult {
+        
         return {
             statusCode: 200,
             body: "okn't"
