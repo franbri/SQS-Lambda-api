@@ -22,8 +22,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var AWS = __importStar(require("aws-sdk"));
 AWS.config.update({
     region: 'us-east-2',
-    accessKeyId: "AKIAWBKIWBSOUSOLS4ON",
-    secretAccessKey: "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"
+    accessKeyId: "",
+    secretAccessKey: ""
 });
 var sqs = new AWS.SQS({ apiVersion: '2012-11-05' });
 var queueURL = "https://sqs.us-east-2.amazonaws.com/415153654941/Myqueue";
