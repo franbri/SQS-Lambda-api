@@ -8,7 +8,8 @@ export default class pingController {
      * Handle `GET` `/ping` requests.
      */
     @GET("/ping")
-    public ping(_event: APIGatewayProxyEvent): APIGatewayProxyResult {
+    public ping(event: APIGatewayProxyEvent): APIGatewayProxyResult {
+        console.log(event);
         return {
             statusCode: 200,
             body: "ponggg",
@@ -16,8 +17,8 @@ export default class pingController {
     }
 
 
-    @GET("/pong")
-    public pong(_event: APIGatewayProxyEvent): APIGatewayProxyResult {
+    @POST("/pong")
+    public pong(event: APIGatewayProxyEvent): APIGatewayProxyResult {
         return {
             statusCode: 200,
             body: "hello world",
