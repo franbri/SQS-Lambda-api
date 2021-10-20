@@ -9,8 +9,9 @@ jobs:
   deploy-source:
     name: deploy lambda from source
     runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v2
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
     - name:  Use Node.js 12.x
       uses: actions/setup-node@v1.4.2
       with:
