@@ -7,8 +7,8 @@ on:
       - main
 jobs:
   deploy-source:
-  name: deploy lambda from source
-  runs-on: ubuntu-latest
+    name: deploy lambda from source
+    runs-on: ubuntu-latest
   steps:
     - name: checkout source code
       uses: actions/checkout@v2
