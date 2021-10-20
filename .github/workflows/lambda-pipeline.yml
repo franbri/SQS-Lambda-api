@@ -1,6 +1,5 @@
-- name: AWS Lambda Deploy
-  uses: appleboy/lambda-action@v0.1.5
-
+name: AWS Lambda Deploy
+uses: appleboy/lambda-action@v0.1.5
 name: deploy lambda aws
 on:
   push:
@@ -13,15 +12,12 @@ jobs:
   steps:
     - name: checkout source code
       uses: actions/checkout@v2
-    
     - name:  Use Node.js 12.x
       uses: actions/setup-node@v1.4.2
       with:
           node-version: [12.x]
-    
     - name: Install dependencies, Build application and Zip dist folder contents
       run: npm install && npx tsc && zip -qq -r -j ./lambda.zip ./dist/*  
-    
     - name: default deploy
       uses: appleboy/lambda-action@master
       with:
