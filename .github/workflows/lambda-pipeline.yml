@@ -1,6 +1,6 @@
 name: AWS Lambda Deploy
 uses: appleboy/lambda-action@v0.1.5
-name: deploy lambda aws
+
 on:
   push:
     branches:
@@ -10,8 +10,8 @@ jobs:
     name: deploy lambda from source
     runs-on: ubuntu-latest
   steps:
-    name: checkout source code
-    uses: actions/checkout@v2
+    - name: checkout source code
+      uses: actions/checkout@v2
     - name:  Use Node.js 12.x
       uses: actions/setup-node@v1.4.2
       with:
@@ -26,5 +26,4 @@ jobs:
         aws_region: ${{ secrets.AWS_REGION }}
         function_name: Lambda-api
         zip_file: lambda.zip  
-
 
