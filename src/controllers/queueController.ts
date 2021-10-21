@@ -2,13 +2,80 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, SQSHandler } from "aws-lam
 import { Controller, GET, Use, Schedule, POST } from "lambaa"
 
 
+import * as AWS from 'aws-sdk'  
+import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
+
+AWS.config.update({
+    region: 'us-east-2',
+    /*fran keys */
+    /*
+    accessKeyId: "AKIA3FPX2XUNRCHUNAMF",
+    secretAccessKey: "tCR8XK4+BLw9pR8RBScKj7OQwiQwQXIErNlA5LFW"
+    */
+    /*oscar keys*/
+    
+    accessKeyId: "AKIAWBKIWBSOQEHCKD7G",
+    secretAccessKey: "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"
+    
+});
+
+var sqs = new AWS.SQS({apiVersion: '2012-11-05'});
+
+
+
 @Controller()
 export default class queueController {
     /**
      * Handle `GET` `/ping` requests.
      */
+    @GET("/queues")
+    async getQueues(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult>{
+        var params = {
+          /*MaxResults: '',
+          NextToken: '',
+          QueueNamePrefix: ''*/
+        };
+        var ret:{}[] = [];
+
+        const request = await sqs.listQueues(params).promise();
+
+
+        if(request.QueueUrls){
+            /*for(var queue in request.QueueUrls){
+                console.log(queue)
+                var test = await this.getQueueInfoByURL(queue);
+                console.log(test)
+            }*/
+
+            request.QueueUrls.forEach((val,ind,arr) => {
+                ret.push({
+                    name: val.split("/").slice(-1)[0],
+                    url: val,
+                    messageCount: "ok"
+                })
+            })
+        }
+
+        
+        return {
+            statusCode: 200,
+            body: JSON.stringify(ret)
+        }
+    }
+
+    async getQueueInfoByURL(url:string) {
+        var params = {
+            QueueUrl: url, /* required */
+            AttributeNames: ["All"/*"deadLetterTargetArn"*/ ]
+        }
+        
+        const attrib = await sqs.getQueueAttributes(params).promise();
+        return JSON.stringify(attrib);
+    }
+
     @GET("/{queueid}")
-    public getQueueInfo(event: APIGatewayProxyEvent): APIGatewayProxyResult {
+    public getQueueInfoByID(event: APIGatewayProxyEvent): APIGatewayProxyResult {
+        console.log(event.path);
         return {
             statusCode: 200,
             body: "pong",
