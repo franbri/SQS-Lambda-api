@@ -7,15 +7,9 @@ import { stringify } from "querystring";
 
 AWS.config.update({
     region: 'us-east-2',
-    /*fran keys */
-    /*
-    accessKeyId: "AKIA3FPX2XUNRCHUNAMF",
-    secretAccessKey: "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"
-    */
-    /*oscar keys*/
-    
-    accessKeyId: "AKIAWBKIWBSOQEHCKD7G",
-    secretAccessKey: "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"
+
+    accessKeyId: "",
+    secretAccessKey: ""
     
 });
 
