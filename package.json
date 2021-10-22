@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1005.0",
+    "dotenv": "^10.0.0",
     "lamba-local-test": "^0.1.0",
     "lambaa": "^3.1.3"
   }
