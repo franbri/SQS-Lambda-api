@@ -8,8 +8,8 @@ import 'dotenv/config'
 AWS.config.update({
     region: 'us-east-2',
     // 
-    accessKeyId: process.env.FRAN_AWS_ID,
-    secretAccessKey: process.env.FRAN_AWS_KEY
+    accessKeyId: process.env.AWS_ID,
+    secretAccessKey: process.env.AWS_KEY
     
 });
 
