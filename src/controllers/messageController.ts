@@ -5,11 +5,14 @@ import * as AWS from 'aws-sdk'
 import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
 import { stringify } from "querystring";
 
+import 'dotenv/config'
+
+console.log(process.env.FRAN_AWS_ID);
 AWS.config.update({
     region: 'us-east-2',
 
-    accessKeyId: "",
-    secretAccessKey: ""
+    accessKeyId: process.env.FRAN_AWS_ID,
+    secretAccessKey: process.env.FRAN_AWS_KEY
     
 });
 

@@ -1,15 +1,15 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, SQSHandler } from "aws-lambda"
 import { Controller, GET, Use, Schedule, POST } from "lambaa"
 
-
 import * as AWS from 'aws-sdk'  
 import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
 
+import 'dotenv/config'
 AWS.config.update({
     region: 'us-east-2',
-    
-    accessKeyId: "",
-    secretAccessKey: ""
+    // 
+    accessKeyId: process.env.FRAN_AWS_ID,
+    secretAccessKey: process.env.FRAN_AWS_KEY
     
 });
 
@@ -70,6 +70,8 @@ export default class queueController {
     @GET("/{queueid}")
     public getQueueInfoByID(event: APIGatewayProxyEvent): APIGatewayProxyResult {
         console.log(event.path);
+        console.log(process.env);
+
         return {
             statusCode: 200,
             body: "pong",
