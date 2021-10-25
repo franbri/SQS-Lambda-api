@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, SQSHandler } from "aws-lambda"
-import { Controller, GET, Use, Schedule, POST } from "lambaa"
+import { Controller, GET, Use, Schedule, POST,FromPath } from "lambaa"
 
 import * as AWS from 'aws-sdk'  
 import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
@@ -45,13 +45,15 @@ export default class queueController {
                 ret.push({
                     name: val.split("/").slice(-1)[0],
                     url: val,
-                    messageCount: "ok"
+                    messageCount: "ok",
                 })
+                
             })
         }
 
         
         return {
+            
             statusCode: 200,
             body: JSON.stringify(ret)
         }
@@ -71,10 +73,10 @@ export default class queueController {
     public getQueueInfoByID(event: APIGatewayProxyEvent): APIGatewayProxyResult {
         console.log(event.path);
         console.log(process.env);
-
+        
         return {
             statusCode: 200,
-            body: "pong",
+            body: "Ok",
         }
     }
 
@@ -90,7 +92,7 @@ export default class queueController {
     public getFailedQueue(event: APIGatewayProxyEvent): APIGatewayProxyResult {
         return {
             statusCode: 200,
-            body: "pong",
+            body: "ping",
         }
     }
 
@@ -101,5 +103,35 @@ export default class queueController {
             body: "pong",
         }
     }
+
+    @POST("/purge/{queueid}")
+    public async purgeQueue(event: APIGatewayProxyEvent,@FromPath("queueid")queueid:string): Promise<APIGatewayProxyResult>  {
+
+
+        var paramsName = {
+            QueueName: queueid /* required */
+        };
+
+        var ret = {
+            statusCode: 200,
+            body: "pong"
+        }
+
+        var queueurl = await sqs.getQueueUrl(paramsName).promise();
+        if (queueurl.QueueUrl){
+            var params = {
+                QueueUrl: queueurl.QueueUrl
+            }
+            const purge = await sqs.purgeQueue(params).promise();
+            console.log("bien se purgo cola");
+        }
+    
+        
+
+        return ret;
+
+    }
+
+    
 
 }

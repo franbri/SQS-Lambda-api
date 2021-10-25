@@ -1,10 +1,11 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda"
-import { Controller, GET, Use, Schedule, POST, DELETE, FromPath } from "lambaa"
+import { Controller, GET, Use, Schedule, POST, DELETE, FromPath, SQS } from "lambaa"
 
 import * as AWS from 'aws-sdk'  
 import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
 
 import 'dotenv/config'
+import { nextTick } from "process";
 
 AWS.config.update({
     region: 'us-east-2',
@@ -61,11 +62,34 @@ export default class messageController {
     }
 
     @POST("/queue/messages/add/{queueid}")
-    public addMessage(event: APIGatewayProxyEvent): APIGatewayProxyResult {
-        return {
+    public async addMessage(event: APIGatewayProxyEvent,@FromPath("queueid")queueid:string): Promise<APIGatewayProxyResult>{
+
+        
+        var paramsName = {
+            QueueName: queueid /* required */
+            /*QueueOwnerAWSAccountId: 'STRING_VALUE'*/
+        };
+
+        var ret = {
             statusCode: 200,
-            body: "Retorno mensage",
+            body: "pong",
         }
+
+        var queueurl = await sqs.getQueueUrl(paramsName).promise();
+
+        if (queueurl.QueueUrl){
+            var params = {
+            
+                DelaySeconds: 10,
+                MessageBody: "",
+                QueueUrl: queueurl.QueueUrl
+            };    
+            const run = await sqs.sendMessage(params).promise();
+            ret.body = JSON.stringify(run.MD5OfMessageBody);
+        }
+
+        return ret
+        
     }
 
     @POST("/queue/messages/mv/{src-queueid}/{dst-queueid}")
@@ -77,11 +101,14 @@ export default class messageController {
     }
 
     @DELETE("/queue/messages/rm/{queueid}/{messageid}")
-    public rmMessage(event: APIGatewayProxyEvent): APIGatewayProxyResult {
+    public async rmMessage(event: APIGatewayProxyEvent,@FromPath("queueid")queueid:string,@FromPath("messageid")messageid:string): Promise<APIGatewayProxyResult> {
+
+
         return {
             statusCode: 200,
-            body: "OK"
+            body: "pong"
         }
+
 
     }
 
