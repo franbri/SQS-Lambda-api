@@ -35,20 +35,29 @@ export default class queueController {
 
 
         if(request.QueueUrls){
-            /*for(var queue in request.QueueUrls){
-                console.log(queue)
-                var test = await this.getQueueInfoByURL(queue);
-                console.log(test)
-            }*/
-
-            request.QueueUrls.forEach((val,ind,arr) => {
-                ret.push({
-                    name: val.split("/").slice(-1)[0],
-                    url: val,
-                    messageCount: "ok",
-                })
+            console.log(request.QueueUrls)
+            for(let queue in request.QueueUrls){
+                console.log(request.QueueUrls[queue])
+                let queueInfoTemp = await this.getQueueInfoByURL(request.QueueUrls[queue]);
+                let queueInfo = JSON.parse(queueInfoTemp);
                 
-            })
+                /*get dead letter info */
+                if(false/*queueInfo.RedrivePolicy*/){
+                    let temp = JSON.parse(queueInfo.RedrivePolicy);
+                    let DLqueueInfoTemp = await this.getQueueInfoByURL(temp.deadLetterTargetArn);
+                    var DLqueueInfo = JSON.parse(DLqueueInfoTemp);
+                }else{
+                    var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
+                }
+
+                ret.push({
+                    name: request.QueueUrls[queue].split("/").slice(-1)[0],
+                    url: request.QueueUrls[queue],
+                    messageCount: queueInfo.ApproximateNumberOfMessages,
+                    DLurl: "",
+                    DLmessageCount: DLqueueInfo.ApproximateNumberOfMessages,
+                })
+            }
         }
 
         
@@ -60,13 +69,14 @@ export default class queueController {
     }
 
     async getQueueInfoByURL(url:string) {
+        console.log(url);
         var params = {
             QueueUrl: url, /* required */
             AttributeNames: ["All"/*"deadLetterTargetArn"*/ ]
         }
         
         const attrib = await sqs.getQueueAttributes(params).promise();
-        return JSON.stringify(attrib);
+        return JSON.stringify(attrib.Attributes);
     }
 
     @GET("/{queueid}")
