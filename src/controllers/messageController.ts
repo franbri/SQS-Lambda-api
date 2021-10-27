@@ -57,7 +57,6 @@ export default class messageController {
             const run = await sqs.receiveMessage(params).promise();
             ret.body = JSON.stringify(run.Messages)
         }
-
         return ret
     }
 
