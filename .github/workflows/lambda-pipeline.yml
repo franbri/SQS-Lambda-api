@@ -5,19 +5,20 @@ on:
   push:
     branches:
       - main
+      - 'feature/**'
 jobs:
   deploy-source:
     name: deploy lambda from source
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v2
-    - name:  Use Node.js 12.x
+      uses: actions/checkout@v1
+    - name:  Use Node.js 14.x
       uses: actions/setup-node@v1.4.2
       with:
-          node-version: [12.x]
+          node-version: [14.x]
     - name: Install dependencies, Build application and Zip dist folder contents
-      run: npm install && npx tsc && zip -qq -r -j ./lambda.zip ./dist/*  
+      run: npm install && npm run webpack && cd .webpack  
     - name: default deploy
       uses: appleboy/lambda-action@master
       with:
@@ -25,4 +26,4 @@ jobs:
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: ${{ secrets.AWS_REGION }}
         function_name: Lambda-api
-        zip_file: lambda.zip  
+        zip_file: sqs-lambda-api.zip  
