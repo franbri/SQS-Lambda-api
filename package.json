@@ -10,7 +10,10 @@
     ]
   },
   "scripts": {
-    "serve": "lambda-local -p 3200 -f ./src/index.ts -r $npm_package_local_routes"
+    "serve": "lambda-local -p 3200 -f ./src/index.ts -r $npm_package_local_routes",
+    "build": "webpack",
+    "deploy": "npm run build && npm run upload",
+    "upload": "aws lambda update-function-code --function-name change-audit-app-events --zip-file fileb://.webpack/change-audit-app-events.zip"
   },
   "repository": {
     "type": "git",
@@ -24,12 +27,14 @@
   "homepage": "https://github.com/franbri/SQS-Lambda-api#readme",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.83",
-    "@types/node": "^16.10.3",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.3",
+    "webpack": "5.39.1",
+    "webpack-cli": "4.7.2",
+    "zip-webpack-plugin": "4.0.1"
   },
   "dependencies": {
-    "aws-sdk": "^2.1005.0",
-    "lamba-local-test": "^0.1.0",
-    "lambaa": "^3.1.3"
+    "lamba-local-test": "0.1.0",
+    "lambaa": "^3.1.3",
+    "ts-loader": "^9.2.6"
   }
 }

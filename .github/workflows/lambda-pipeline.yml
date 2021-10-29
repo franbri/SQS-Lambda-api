@@ -1,0 +1,31 @@
+name: AWS Lambda Deploy
+#uses: appleboy/lambda-action@v0.1.5
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+jobs:
+  deploy-source:
+    name: deploy lambda from source
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name:  Use Node.js 14.x
+      uses: actions/setup-node@v1.4.2
+      env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+      with:
+          node-version: 14.x
+    - name: Install dependencies, Build application and Zip dist folder contents
+      run: npm install && npm run build && cd .webpack  
+    - name: default deploy
+      uses: appleboy/lambda-action@master
+      with:
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_region: ${{ secrets.AWS_REGION }}
+        function_name: Funcion_Lambda
+        zip_file: .webpack/sqs-lambda-api.zip  
