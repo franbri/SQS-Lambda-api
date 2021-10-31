@@ -3,7 +3,7 @@ const ZipPlugin = require("zip-webpack-plugin");
 
 module.exports = {
     mode: "production",
-    entry: "./src/index.ts",
+    entry: "./src/handler.ts",
     resolve: {
         modules: [
             'node_modules'
