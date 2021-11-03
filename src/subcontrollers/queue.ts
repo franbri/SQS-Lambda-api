@@ -1,5 +1,6 @@
 import AWS from "aws-sdk";
 import 'dotenv/config';
+import message from "./message";
 
 
 export default class queue {
@@ -81,7 +82,19 @@ export default class queue {
         return JSON.stringify(attrib.Attributes);
     }
 
+    async getDL(queueURL:string){
+        var attributes = JSON.parse(await this.getQueueInfoByURL(queueURL));
+        var DLURL;
+        if(attributes.queueInfo.RedrivePolicy){
+            DLURL = this.getURLbyARN(attributes.queueInfo.RedrivePolicy.deadLetterTargetArn)
+        }
+        return DLURL;
+    }
 
+    async getURLbyARN(arn:string){
+        var name = arn.split(':')[-1]
+        return this.getQueueURL(name);
+    }
 
     async purgeQueue(queueName: string) {
         var ret = {
@@ -102,5 +115,23 @@ export default class queue {
         return ret;
     }
 
+    public async reinyect(queueName: string){
+        var ret = {
+            statusCode: 200,
+            body: "error"
+        }
 
+        var queueURL = await this.getQueueURL(queueName);
+
+        if (queueURL.QueueUrl) {
+            var DLURL = await this.getDL(queueURL.QueueUrl);
+            var mess = new message();
+            if (DLURL){
+                mess.mvMessage(queueURL.QueueUrl)
+                ret.body = "ok"
+                console.log("bien se reinyecto cola");
+            }
+        }
+        return ret;
+    }
 }

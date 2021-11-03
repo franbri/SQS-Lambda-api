@@ -37,25 +37,28 @@ export default class queueController {
     public getQueueGroup(event: APIGatewayProxyEvent): APIGatewayProxyResult {
         return {
             statusCode: 200,
-            body: "pong",
+            body: "no groups defined",
         }
     }
 
     @GET("/errors")
-    public getFailedQueue(event: APIGatewayProxyEvent): APIGatewayProxyResult {
+    public getFailedQueues(event: APIGatewayProxyEvent): APIGatewayProxyResult {
+
         return {
             statusCode: 200,
             body: "ping",
         }
     }
 
+    /*
+    maybe it is useless
     @GET("/{src-queueid}/{dst-queueid}")
     public mvQueue(event: APIGatewayProxyEvent): APIGatewayProxyResult {
         return {
             statusCode: 200,
             body: "pong",
         }
-    }
+    }*/
 
     @POST("/purge/{queueid}")
     public async purgeQueue(event: APIGatewayProxyEvent,@FromPath("queueid")queueid:string): Promise<APIGatewayProxyResult>  {
