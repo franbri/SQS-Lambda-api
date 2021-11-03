@@ -103,6 +103,10 @@ export default class messageController {
     @DELETE("/queue/messages/rm/{queueid}/{messageid}")
     public async rmMessage(event: APIGatewayProxyEvent,@FromPath("queueid")queueid:string,@FromPath("messageid")messageid:string): Promise<APIGatewayProxyResult> {
 
+        var paramsName = {
+            QueueName: queueid /* required */
+            /*QueueOwnerAWSAccountId: 'STRING_VALUE'*/
+        };
 
         return {
             statusCode: 200,
@@ -113,7 +117,74 @@ export default class messageController {
     }
 
     @POST("/queue/messages/reinyect/{queueid}")
-    public reInyect(event: APIGatewayProxyEvent): APIGatewayProxyResult {
+    public async reInyect(event: APIGatewayProxyEvent,@FromPath("queueid")queueid:string): Promise<APIGatewayProxyResult>{
+        
+
+
+        var paramsName = {
+            QueueName: queueid /* required */
+            /*QueueOwnerAWSAccountId: 'STRING_VALUE'*/
+        };
+
+        var queueurl = await sqs.getQueueUrl(paramsName).promise();
+        if (queueurl.QueueUrl)
+        {
+            var params = {
+                QueueUrl: queueurl.QueueUrl
+            };    
+            const dl = await sqs.listDeadLetterSourceQueues(params).promise();
+            for(let i = 0 ; i < dl.queueUrls.length ; i++)
+            {
+                if(dl.queueUrls[i] == queueurl.QueueUrl)
+                {
+                    console.log(dl.queueUrls);
+        
+                    var newparams = {
+                        AttributeNames: [
+                            "SentTimestamp"
+                        ],
+                        MaxNumberOfMessages: 10,
+                        MessageAttributeNames: [
+                            "All"
+                        ],
+                        QueueUrl: dl.queueUrls[i],
+                        VisibilityTimeout: 0,
+                        WaitTimeSeconds: 20
+                    };
+            
+                    const receive = await sqs.receiveMessage(newparams).promise();
+            
+                    if(typeof receive.Messages !== 'undefined')
+                    {
+                
+                        for(let i = 0 ; i < receive.Messages.length ;i++)
+                        {
+                            if(receive.Messages[i].Body)
+                            {
+                                var parametros = {
+                
+                                    DelaySeconds: 10,
+                                    MessageBody: JSON.stringify(receive.Messages[i].Body),
+                                    QueueUrl: queueurl.QueueUrl
+                                };
+                                const send = await sqs.sendMessage(parametros).promise();
+                        
+                            }
+                    
+                        }
+                
+                    }
+                    else
+                    {
+                        console.log("ups la cola no tiene mensajes");
+                    }
+                }
+            }
+            
+            
+            //console.log(receive.Messages);
+        }
+
         return {
             statusCode: 200,
             body: "okn't"
