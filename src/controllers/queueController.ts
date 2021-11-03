@@ -17,17 +17,20 @@ export default class queueController {
         }
     }
 
-    
-
     @GET("/{queueid}")
-    public getQueueInfoByID(event: APIGatewayProxyEvent): APIGatewayProxyResult {
-        console.log(event.path);
-        console.log(process.env);
-        
-        return {
+    public async getQueueInfoByID(event: APIGatewayProxyEvent, @FromPath("queueid")queueid:string): Promise<APIGatewayProxyResult> {
+        var ret = {
             statusCode: 200,
-            body: "Ok",
+            body: "error"
         }
+
+        var sqs = new queue();
+        var name = await sqs.getQueueURL(queueid);
+
+        if(name){
+            ret.body = await sqs.getQueueInfoByURL(name.QueueUrl);
+        }
+        return ret;
     }
 
     @GET("/group/{GroupName}")
