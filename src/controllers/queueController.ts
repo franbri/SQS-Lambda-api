@@ -1,83 +1,23 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, SQSHandler } from "aws-lambda"
 import { Controller, GET, Use, Schedule, POST,FromPath } from "lambaa"
 
-import * as AWS from 'aws-sdk'  
-import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
-
-import 'dotenv/config'
-AWS.config.update({
-    region: 'us-east-2',
-    // 
-    accessKeyId: process.env.AWS_ID,
-    secretAccessKey: process.env.AWS_KEY
-    
-});
-
-var sqs = new AWS.SQS({apiVersion: '2012-11-05'});
-
-
+import queue from "../subcontrollers/queue";
 
 @Controller()
 export default class queueController {
-    /**
-     * Handle `GET` `/ping` requests.
-     */
+
     @GET("/queues")
     async getQueues(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult>{
-        var params = {
-          /*MaxResults: '',
-          NextToken: '',
-          QueueNamePrefix: ''*/
-        };
-        var ret:{}[] = [];
-
-        const request = await sqs.listQueues(params).promise();
-
-
-        if(request.QueueUrls){
-            console.log(request.QueueUrls)
-            for(let queue in request.QueueUrls){
-                console.log(request.QueueUrls[queue])
-                let queueInfoTemp = await this.getQueueInfoByURL(request.QueueUrls[queue]);
-                let queueInfo = JSON.parse(queueInfoTemp);
-                
-                /*get dead letter info */
-                if(false/*queueInfo.RedrivePolicy*/){
-                    let temp = JSON.parse(queueInfo.RedrivePolicy);
-                    let DLqueueInfoTemp = await this.getQueueInfoByURL(temp.deadLetterTargetArn);
-                    var DLqueueInfo = JSON.parse(DLqueueInfoTemp);
-                }else{
-                    var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
-                }
-
-                ret.push({
-                    name: request.QueueUrls[queue].split("/").slice(-1)[0],
-                    url: request.QueueUrls[queue],
-                    messageCount: queueInfo.ApproximateNumberOfMessages,
-                    DLurl: "",
-                    DLmessageCount: DLqueueInfo.ApproximateNumberOfMessages,
-                })
-            }
-        }
-
-        
-        return {
-            
+        var sqs = new queue();
+        var ret = await sqs.listQueues();
+        console.log(ret);
+        return {  
             statusCode: 200,
             body: JSON.stringify(ret)
         }
     }
 
-    async getQueueInfoByURL(url:string) {
-        console.log(url);
-        var params = {
-            QueueUrl: url, /* required */
-            AttributeNames: ["All"/*"deadLetterTargetArn"*/ ]
-        }
-        
-        const attrib = await sqs.getQueueAttributes(params).promise();
-        return JSON.stringify(attrib.Attributes);
-    }
+    
 
     @GET("/{queueid}")
     public getQueueInfoByID(event: APIGatewayProxyEvent): APIGatewayProxyResult {
@@ -116,30 +56,10 @@ export default class queueController {
 
     @POST("/purge/{queueid}")
     public async purgeQueue(event: APIGatewayProxyEvent,@FromPath("queueid")queueid:string): Promise<APIGatewayProxyResult>  {
-
-
-        var paramsName = {
-            QueueName: queueid /* required */
-        };
-
-        var ret = {
-            statusCode: 200,
-            body: "pong"
-        }
-
-        var queueurl = await sqs.getQueueUrl(paramsName).promise();
-        if (queueurl.QueueUrl){
-            var params = {
-                QueueUrl: queueurl.QueueUrl
-            }
-            const purge = await sqs.purgeQueue(params).promise();
-            console.log("bien se purgo cola");
-        }
-    
-        
+        var sqs = new queue();
+        var ret = sqs.purgeQueue(queueid);
 
         return ret;
-
     }
 
     
