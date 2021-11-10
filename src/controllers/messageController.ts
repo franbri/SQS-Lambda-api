@@ -27,6 +27,7 @@ export default class messageController {
     @GET("/queue/messages/{queueid}")
     public async getMessages(
         event: APIGatewayProxyEvent,
+
         @FromPath("queueid") queueid: string
     ): Promise<APIGatewayProxyResult> {
         var messages = new message();
