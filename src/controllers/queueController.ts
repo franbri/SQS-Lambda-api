@@ -37,14 +37,6 @@ export default class queueController {
         return ret;
     }
 
-        var sqs = new queue();
-        var name = await sqs.getQueueURL(queueid);
-
-        if (name) {
-            ret.body = await sqs.getQueueInfoByURL(name.QueueUrl);
-        }
-        return ret;
-    }
     /*
     @GET("/group/{GroupName}")
     public getQueueGroup(event: APIGatewayProxyEvent): APIGatewayProxyResult {
