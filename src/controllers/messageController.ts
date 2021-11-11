@@ -7,6 +7,8 @@ import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_pla
 import 'dotenv/config'
 import { nextTick } from "process";
 import message from "../subcontrollers/message";
+import queue from "../subcontrollers/queue";
+import { getDefaultSettings } from "http2";
 
 AWS.config.update({
     region: 'us-east-2',
@@ -93,9 +95,60 @@ export default class messageController {
     }
 
     @POST("/queue/messages/reinyect/{queueid}")
-    public reInyect(
-        event: APIGatewayProxyEvent
-    ): APIGatewayProxyResult {
+    public async reInyect(
+        event: APIGatewayProxyEvent,
+        @FromPath("queueid") queueid: string,
+    ): Promise<APIGatewayProxyResult> {
+
+        var messages = new message();
+        var queues = new queue();
+
+        var dl = JSON.stringify(queues.getDL(queueid));
+        var queueurl = JSON.stringify(queues.getQueueURL(queueid));
+
+        var newparams = {
+            AttributeNames: [
+                "SentTimestamp"
+            ],
+            MaxNumberOfMessages: 10,
+            MessageAttributeNames: [
+                "All"
+            ],
+            QueueUrl: dl,
+            VisibilityTimeout: 0,
+            WaitTimeSeconds: 20
+        };
+        
+        var receive = await sqs.receiveMessage(newparams).promise()
+        
+        if(typeof receive.Messages !== 'undefined')
+        {
+            for(let i = 0 ; i < receive.Messages.length ;i++)
+            {
+                if(receive.Messages[i].Body)
+                {
+                    var parametros = {
+                
+                        DelaySeconds: 10,
+                        MessageBody: JSON.stringify(receive.Messages[i].Body),
+                        QueueUrl: queueurl
+                    };
+                    const send = await sqs.sendMessage(parametros).promise();
+                    var deleteparams = {
+                        QueueUrl: dl,
+                        ReceiptHandle: JSON.stringify(receive.Messages[i].ReceiptHandle)
+                    }
+                    const deletemessageDl = await sqs.deleteMessage(deleteparams).promise()
+                }
+            }
+            console.log("bien se reinyecto cola");
+        }
+        else{
+            console.log("ups la cola no tiene mensajes");
+        }
+
+
+
         return {
             statusCode: 200,
             body: "ok"
