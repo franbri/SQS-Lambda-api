@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, SQSHandler } from "aws-lambda"
 import { Controller, GET, Use, Schedule, POST, FromPath } from "lambaa"
 
+
 import queue from "../subcontrollers/queue";
 
 @Controller()
@@ -13,6 +14,7 @@ export default class queueController {
         console.log(ret);
 
         return {
+
             statusCode: 200,
             body: JSON.stringify(ret)
         }
@@ -20,10 +22,21 @@ export default class queueController {
 
     @GET("/{queueid}")
     public async getQueueInfoByID(event: APIGatewayProxyEvent, @FromPath("queueid") queueid: string): Promise<APIGatewayProxyResult> {
+
         var ret = {
             statusCode: 500,
             body: "error"
         }
+
+
+        var sqs = new queue();
+        var name = await sqs.getQueueURL(queueid);
+
+        if(name){
+            ret.body = await sqs.getQueueInfoByURL(name.QueueUrl);
+        }
+        return ret;
+    }
 
         var sqs = new queue();
         var name = await sqs.getQueueURL(queueid);
@@ -68,6 +81,7 @@ export default class queueController {
         event: APIGatewayProxyEvent,
         @FromPath("queueid") queueid: string
     ): Promise<APIGatewayProxyResult> {
+
         var sqs = new queue();
         var ret = sqs.purgeQueue(queueid);
 
