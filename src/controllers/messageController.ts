@@ -126,18 +126,23 @@ export default class messageController {
             /*QueueOwnerAWSAccountId: 'STRING_VALUE'*/
         };
 
+        
+
         var queueurl = await sqs.getQueueUrl(paramsName).promise();
         if (queueurl.QueueUrl)
         {
             var params = {
                 QueueUrl: queueurl.QueueUrl
             };    
+            
             const dl = await sqs.listDeadLetterSourceQueues(params).promise();
+            //console.log(dl.queueUrls);
+    
             for(let i = 0 ; i < dl.queueUrls.length ; i++)
             {
-                if(dl.queueUrls[i] == queueurl.QueueUrl)
+                if(dl.queueUrls[i])
                 {
-                    console.log(dl.queueUrls);
+                    
         
                     var newparams = {
                         AttributeNames: [
@@ -157,22 +162,27 @@ export default class messageController {
                     if(typeof receive.Messages !== 'undefined')
                     {
                 
-                        for(let i = 0 ; i < receive.Messages.length ;i++)
+                        for(let j = 0 ; j < receive.Messages.length ;j++)
                         {
                             if(receive.Messages[i].Body)
                             {
                                 var parametros = {
                 
                                     DelaySeconds: 10,
-                                    MessageBody: JSON.stringify(receive.Messages[i].Body),
+                                    MessageBody: JSON.stringify(receive.Messages[j].Body),
                                     QueueUrl: queueurl.QueueUrl
                                 };
                                 const send = await sqs.sendMessage(parametros).promise();
-                        
+                                
+                                var deleteparams = {
+                                    QueueUrl: dl.queueUrls[i],
+                                    ReceiptHandle: JSON.stringify(receive.Messages[j].ReceiptHandle)
+                                }
+                                const deletemessageDl = await sqs.deleteMessage(deleteparams).promise()
                             }
                     
                         }
-                
+                        console.log("bien se reinyecto cola");
                     }
                     else
                     {
