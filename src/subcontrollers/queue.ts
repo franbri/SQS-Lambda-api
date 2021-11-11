@@ -39,10 +39,10 @@ export default class queue {
                 let queueInfo = JSON.parse(queueInfoTemp);
 
                 /*get dead letter info */
-                if (false/*queueInfo.RedrivePolicy*/) {
+                if (queueInfo.RedrivePolicy) {
                     let temp = JSON.parse(queueInfo.RedrivePolicy);
-                    let DLqueueInfoTemp = await this.getQueueInfoByURL((await this.getQueueURL(temp.deadLetterTargetArn)).QueueUrl);
-                    var DLqueueInfo = JSON.parse(DLqueueInfoTemp);
+                    let DLqueueInfoTemp = this.getQueueInfoByURL(await this.getQueueURL(temp.deadLetterTargetArn));
+                    var DLqueueInfo = JSON.parse(await DLqueueInfoTemp);
                 } else {
                     var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
                 }
@@ -60,10 +60,14 @@ export default class queue {
     }
 
     async getQueueURL(id: string) {
+        var name = "";
         var paramsName = {
             QueueName: id /* required */
         };
-        var name = this.sqs.getQueueUrl(paramsName).promise();
+        var QueueURL =await this.sqs.getQueueUrl(paramsName).promise();
+        if(QueueURL.QueueUrl){
+            name = QueueURL.QueueUrl;
+        }
 
         return name;
 
@@ -104,9 +108,9 @@ export default class queue {
 
         var queueURL = await this.getQueueURL(queueName);
 
-        if (queueURL.QueueUrl) {
+        if (queueURL) {
             var params = {
-                QueueUrl: queueURL.QueueUrl
+                QueueUrl: queueURL
             }
             const purge = await this.sqs.purgeQueue(params).promise();
             ret.body = "ok"
@@ -123,11 +127,11 @@ export default class queue {
 
         var queueURL = await this.getQueueURL(queueName);
 
-        if (queueURL.QueueUrl) {
-            var DLURL = await this.getDL(queueURL.QueueUrl);
+        if (queueURL) {
+            var DLURL = await this.getDL(queueURL);
             var mess = new message();
             if (DLURL){
-                mess.mvMessage(queueURL.QueueUrl)
+                mess.mvMessage(queueURL)
                 ret.body = "ok"
                 console.log("bien se reinyecto cola");
             }

@@ -29,7 +29,7 @@ export default class message{
         var queueurl = await queueManager.getQueueURL(Queueid);
 
         console.log(queueurl)
-        if (queueurl.QueueUrl) {
+        if (queueurl) {
             var params = {
                 AttributeNames: [
                     "SentTimestamp"
@@ -38,7 +38,7 @@ export default class message{
                 MessageAttributeNames: [
                     "All"
                 ],
-                QueueUrl: queueurl.QueueUrl,
+                QueueUrl: queueurl,
                 VisibilityTimeout: 0,
                 WaitTimeSeconds: 10
             };
@@ -65,10 +65,10 @@ export default class message{
         var queueurl = await queueManager.getQueueURL(Queueid);
 
         console.log(queueurl)
-        if (queueurl.QueueUrl) {
+        if (queueurl) {
             var params = {
                 MessageBody: 'testing', /* required */
-                QueueUrl: queueurl.QueueUrl, /* required */
+                QueueUrl: queueurl, /* required */
                 //DelaySeconds: 'NUMBER_VALUE',
                 // MessageAttributes: {
                 //   '<String>': {

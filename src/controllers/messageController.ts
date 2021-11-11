@@ -102,8 +102,8 @@ export default class messageController {
         var messages = new message();
         var queues = new queue();
 
-        var dl = JSON.stringify(queues.getDL(queueid));
-        var queueurl = JSON.stringify(queues.getQueueURL(queueid));
+        var dl = await queues.getDL(queueid);
+        var queueurl = await queues.getQueueURL(queueid);
 
         var newparams = {
             AttributeNames: [
@@ -120,19 +120,19 @@ export default class messageController {
         
         var receive = await sqs.receiveMessage(newparams).promise()
         
-        if(typeof receive.Messages !== 'undefined')
+        if(typeof receive.Messages !== 'undefined' && queueurl)
         {
             for(let i = 0 ; i < receive.Messages.length ;i++)
             {
                 if(receive.Messages[i].Body)
                 {
-                    var parametros = {
+                    var params = {
                 
                         DelaySeconds: 10,
                         MessageBody: JSON.stringify(receive.Messages[i].Body),
                         QueueUrl: queueurl
                     };
-                    const send = await sqs.sendMessage(parametros).promise();
+                    const send = await sqs.sendMessage(params).promise();
                     var deleteparams = {
                         QueueUrl: dl,
                         ReceiptHandle: JSON.stringify(receive.Messages[i].ReceiptHandle)
