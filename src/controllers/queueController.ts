@@ -11,6 +11,7 @@ export default class queueController {
         var sqs = new queue();
         var ret = await sqs.listQueues();
         console.log(ret);
+
         return {
             statusCode: 200,
             body: JSON.stringify(ret)
@@ -20,7 +21,7 @@ export default class queueController {
     @GET("/{queueid}")
     public async getQueueInfoByID(event: APIGatewayProxyEvent, @FromPath("queueid") queueid: string): Promise<APIGatewayProxyResult> {
         var ret = {
-            statusCode: 200,
+            statusCode: 500,
             body: "error"
         }
 
@@ -28,7 +29,7 @@ export default class queueController {
         var name = await sqs.getQueueURL(queueid);
 
         if (name) {
-            ret.body = await sqs.getQueueInfoByURL(name.QueueUrl);
+            ret.body = JSON.stringify(await sqs.getQueueInfoByURL(name.QueueUrl));
         }
         return ret;
     }
