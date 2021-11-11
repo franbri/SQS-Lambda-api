@@ -88,9 +88,9 @@ export default class queue {
 
     async getDL(queueURL:string){
         var attributes = JSON.parse(await this.getQueueInfoByURL(queueURL));
-        var DLURL;
+        var DLURL = "";
         if(attributes.queueInfo.RedrivePolicy){
-            DLURL = this.getURLbyARN(attributes.queueInfo.RedrivePolicy.deadLetterTargetArn)
+            DLURL = await this.getURLbyARN(attributes.queueInfo.RedrivePolicy.deadLetterTargetArn)
         }
         return DLURL;
     }
