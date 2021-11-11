@@ -36,15 +36,7 @@ export default class queueController {
             ret.body = await sqs.getQueueInfoByURL(name.QueueUrl);
         }
         return ret;
-    }
 
-        var sqs = new queue();
-        var name = await sqs.getQueueURL(queueid);
-
-        if (name) {
-            ret.body = JSON.stringify(await sqs.getQueueInfoByURL(name.QueueUrl));
-        }
-        return ret;
     }
     /*
     @GET("/group/{GroupName}")
