@@ -18,13 +18,15 @@ export default class message{
     }
 
     async listMessages(Queueid: string) {
+        //this.sendMessages(Queueid);
         var ret = {
-            statusCode: 400,
+            statusCode: 500,
             body: "pong"
         }
+        console.log(Queueid);
 
-        var Qman = new queue();
-        var queueurl = await Qman.getQueueURL(Queueid);
+        var queueManager = new queue();
+        var queueurl = await queueManager.getQueueURL(Queueid);
 
         console.log(queueurl)
         if (queueurl.QueueUrl) {
@@ -38,18 +40,87 @@ export default class message{
                 ],
                 QueueUrl: queueurl.QueueUrl,
                 VisibilityTimeout: 0,
-                WaitTimeSeconds: 20
+                WaitTimeSeconds: 10
             };
 
-            const run = await this.sqs.receiveMessage(params).promise();
-            ret.body = JSON.stringify(run.Messages)
+            const messageList = await this.sqs.receiveMessage(params).promise();
+            if(messageList.Messages){
+                let messages = JSON.stringify(messageList.Messages);
+                ret.body = messages;
+                ret.statusCode = 200;
+            }
         }
-        
+        return ret
+    }
+
+    async sendMessages(Queueid: string) {
+        var ret = {
+            statusCode: 500,
+            body: "pong"
+        }
+
+        console.log(Queueid);
+
+        var queueManager = new queue();
+        var queueurl = await queueManager.getQueueURL(Queueid);
+
+        console.log(queueurl)
+        if (queueurl.QueueUrl) {
+            var params = {
+                MessageBody: 'testing', /* required */
+                QueueUrl: queueurl.QueueUrl, /* required */
+                //DelaySeconds: 'NUMBER_VALUE',
+                // MessageAttributes: {
+                //   '<String>': {
+                //     DataType: 'STRING_VALUE', /* required */
+                //     BinaryListValues: [
+                //       Buffer.from('...') || 'STRING_VALUE' /* Strings will be Base-64 encoded on your behalf */,
+                //       /* more items */
+                //     ],
+                //     BinaryValue: Buffer.from('...') || 'STRING_VALUE' /* Strings will be Base-64 encoded on your behalf */,
+                //     StringListValues: [
+                //       'STRING_VALUE',
+                //       /* more items */
+                //     ],
+                //     StringValue: 'STRING_VALUE'
+                //   },
+                //   /* '<String>': ... */
+                // },
+                // MessageDeduplicationId: 'STRING_VALUE',
+                // MessageGroupId: 'STRING_VALUE',
+                // MessageSystemAttributes: {
+                //   '<MessageSystemAttributeNameForSends>': {
+                //     DataType: 'STRING_VALUE', /* required */
+                //     BinaryListValues: [
+                //       Buffer.from('...') || 'STRING_VALUE' /* Strings will be Base-64 encoded on your behalf */,
+                //       /* more items */
+                //     ],
+                //     BinaryValue: Buffer.from('...') || 'STRING_VALUE' /* Strings will be Base-64 encoded on your behalf */,
+                //     StringListValues: [
+                //       'STRING_VALUE',
+                //       /* more items */
+                //     ],
+                //     StringValue: 'STRING_VALUE'
+                //   },
+                //   /* '<MessageSystemAttributeNameForSends>': ... */
+                // }
+              };
+            this.sqs.sendMessage(params,(err,data)=>{
+                console.log(err)
+            }).send();
+
+            /*const messageList = await this.sqs.receiveMessage(params);
+            
+            if(messageList.Messages){
+                ret.body = JSON.stringify(messageList.Messages);
+                ret.statusCode = 200;
+            }*/
+        }
         return ret
     }
 
     setMessages(QueueUrl: string){
         throw new Error("Method not implemented.");
-    }
+    }       
 
 }

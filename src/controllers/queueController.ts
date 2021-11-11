@@ -30,13 +30,12 @@ export default class queueController {
 
 
         var sqs = new queue();
-        var name = await sqs.getQueueURL(queueid);
+        var url = await sqs.getQueueURL(queueid);
 
-        if(name){
-            ret.body = await sqs.getQueueInfoByURL(name.QueueUrl);
+        if(url){
+            ret.body = await sqs.getQueueInfoByURL(url.QueueUrl);
         }
         return ret;
-
     }
     /*
     @GET("/group/{GroupName}")
