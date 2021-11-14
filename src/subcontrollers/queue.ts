@@ -121,21 +121,60 @@ export default class queue {
 
     public async reinyect(queueName: string){
         var ret = {
-            statusCode: 200,
-            body: "error"
+            statusCode: 500,
+            body: "unkown error"
         }
 
-        var queueURL = await this.getQueueURL(queueName);
+        var dl = await this.getDL(queueName);
+        var queueurl = await this.getQueueURL(queueName);
 
-        if (queueURL) {
-            var DLURL = await this.getDL(queueURL);
-            var mess = new message();
-            if (DLURL){
-                mess.mvMessage(queueURL)
-                ret.body = "ok"
-                console.log("bien se reinyecto cola");
+        var newparams = {
+            AttributeNames: [
+                "SentTimestamp"
+            ],
+            MaxNumberOfMessages: 10,
+            MessageAttributeNames: [
+                "All"
+            ],
+            QueueUrl: dl,
+            VisibilityTimeout: 0,
+            WaitTimeSeconds: 20
+        };
+
+        var receive = await this.sqs.receiveMessage(newparams).promise();
+
+        if(receive.Messages && queueurl){
+            for(let mess in receive.Messages){
+                if(receive.Messages[mess].Body){
+                    let inparams = {
+                        DelaySeconds: 10,
+                        MessageBody: JSON.stringify(receive.Messages[mess].Body),
+                        QueueUrl: queueurl
+                    }
+                    this.sqs.sendMessage(inparams, (err,data) =>{
+                        if(err){
+                            console.log("error al reinyectar");
+                            return err;
+                        }
+                    }).send();
+                    let deleteparams = {
+                        QueueUrl: dl,
+                        ReceiptHandle: JSON.stringify(receive.Messages[mess].ReceiptHandle)
+                    }
+                    this.sqs.deleteMessage(deleteparams).send();
+                }
             }
+
+            ret.body = "ok";
+            ret.statusCode = 200;
+        }if(!receive.Messages){
+            ret.body = "no messages to reinyect";
         }
+        if(!queueurl){
+            ret.body = "queue not found";
+        }
+
         return ret;
     }
+
 }
