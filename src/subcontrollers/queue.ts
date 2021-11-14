@@ -40,9 +40,9 @@ export default class queue {
 
                 /*get dead letter info */
                 if (queueInfo.RedrivePolicy) {
-                    let temp = JSON.parse(queueInfo.RedrivePolicy);
-                    let DLqueueInfoTemp = this.getQueueInfoByURL(await this.getQueueURL(temp.deadLetterTargetArn));
-                    var DLqueueInfo = JSON.parse(await DLqueueInfoTemp);
+                    // let temp = JSON.parse(queueInfo.RedrivePolicy);
+                    // let DLqueueInfoTemp = this.getQueueInfoByURL(await this.getQueueURL(temp.deadLetterTargetArn));
+                    // var DLqueueInfo = JSON.parse(await DLqueueInfoTemp);
                 } else {
                     var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
                 }
