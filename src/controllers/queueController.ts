@@ -14,7 +14,6 @@ export default class queueController {
         console.log(ret);
 
         return {
-
             statusCode: 200,
             body: JSON.stringify(ret)
         }
