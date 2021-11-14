@@ -19,10 +19,16 @@ export default class pingController {
 
     @POST("/pong")
     public pong(event: APIGatewayProxyEvent): APIGatewayProxyResult {
-        return {
+        let ret =  {
             statusCode: 200,
             body: "hello world",
         }
+
+        
+        if(event.headers){
+            ret.body = JSON.stringify(event.headers);
+        }
+        return ret
     }
 
 }
