@@ -25,35 +25,50 @@ export default class queue {
         var ret: {
             name: string,
             url: string,
-            messageCount: string,
+            messageCount: number,
             DLurl: string,
-            DLmessageCount: string
+            DLmessageCount: number
         }[] = [];
 
         const request = await this.sqs.listQueues(params).promise();
-        
+
         if (request.QueueUrls) {
             console.log(request.QueueUrls);
             for (let queue in request.QueueUrls) {
                 let queueInfoTemp = await this.getQueueInfoByURL(request.QueueUrls[queue]);
                 let queueInfo = JSON.parse(queueInfoTemp);
 
-                /*get dead letter info */
-                if (queueInfo.RedrivePolicy) {
-                    // let temp = JSON.parse(queueInfo.RedrivePolicy);
-                    // let DLqueueInfoTemp = this.getQueueInfoByURL(await this.getQueueURL(temp.deadLetterTargetArn));
-                    // var DLqueueInfo = JSON.parse(await DLqueueInfoTemp);
-                } else {
-                    var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
-                }
-
-                ret.push({
+                let info = {
                     name: request.QueueUrls[queue].split("/").slice(-1)[0],
                     url: request.QueueUrls[queue],
                     messageCount: queueInfo.ApproximateNumberOfMessages,
                     DLurl: "",
-                    DLmessageCount: DLqueueInfo.ApproximateNumberOfMessages,
-                })
+                    DLmessageCount: 0,
+                }
+
+                /*get dead letter info */
+
+                if (queueInfo.RedrivePolicy) {
+                    try {
+                        let temp = JSON.parse(queueInfo.RedrivePolicy);
+                        console.log(temp)
+                        console.log(temp.deadLetterTargetArn)
+                        console.log(this.getURLbyARN(temp.deadLetterTargetArn));
+                        var DLqueueInfoTemp = this.getQueueInfoByURL(await this.getURLbyARN(temp.deadLetterTargetArn));
+                        var DLqueueInfo = JSON.parse(await DLqueueInfoTemp);
+                        info.DLurl = (await this.getURLbyARN(temp.deadLetterTargetArn));
+                        info.DLmessageCount = DLqueueInfo.ApproximateNumberOfMessages
+                    } catch {
+                        console.log("bruh error");
+                        console.log("end erorr");
+                    }
+                } else {
+                    var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
+                }
+
+
+
+                ret.push(info)
             }
         }
         return ret;
@@ -64,8 +79,8 @@ export default class queue {
         var paramsName = {
             QueueName: id /* required */
         };
-        var QueueURL =await this.sqs.getQueueUrl(paramsName).promise();
-        if(QueueURL.QueueUrl){
+        var QueueURL = await this.sqs.getQueueUrl(paramsName).promise();
+        if (QueueURL.QueueUrl) {
             name = QueueURL.QueueUrl;
         }
 
@@ -73,8 +88,8 @@ export default class queue {
 
     }
 
-    async getQueueInfoByURL(url: string|undefined) {
-        if (!url){
+    async getQueueInfoByURL(url: string | undefined) {
+        if (!url) {
             return "";
         }
         var params = {
@@ -86,18 +101,18 @@ export default class queue {
         return JSON.stringify(attrib.Attributes);
     }
 
-    async getDL(queueURL:string){
+    async getDL(queueURL: string) {
         var attributes = JSON.parse(await this.getQueueInfoByURL(queueURL));
         var DLURL = "";
-        if(attributes.queueInfo.RedrivePolicy){
+        if (attributes.queueInfo.RedrivePolicy) {
             DLURL = await this.getURLbyARN(attributes.queueInfo.RedrivePolicy.deadLetterTargetArn)
         }
         return DLURL;
     }
 
-    async getURLbyARN(arn:string){
-        var name = arn.split(':')[-1]
-        return this.getQueueURL(name);
+    getURLbyARN(arn: string) {
+        var name = arn.split(':');
+        return this.getQueueURL(name[name.length - 1]);
     }
 
     async purgeQueue(queueName: string) {
@@ -119,7 +134,7 @@ export default class queue {
         return ret;
     }
 
-    public async reinyect(queueName: string){
+    public async reinyect(queueName: string) {
         var ret = {
             statusCode: 500,
             body: "unkown error"
@@ -143,16 +158,16 @@ export default class queue {
 
         var receive = await this.sqs.receiveMessage(newparams).promise();
 
-        if(receive.Messages && queueurl){
-            for(let mess in receive.Messages){
-                if(receive.Messages[mess].Body){
+        if (receive.Messages && queueurl) {
+            for (let mess in receive.Messages) {
+                if (receive.Messages[mess].Body) {
                     let inparams = {
                         DelaySeconds: 10,
                         MessageBody: JSON.stringify(receive.Messages[mess].Body),
                         QueueUrl: queueurl
                     }
-                    this.sqs.sendMessage(inparams, (err,data) =>{
-                        if(err){
+                    this.sqs.sendMessage(inparams, (err, data) => {
+                        if (err) {
                             console.log("error al reinyectar");
                             return err;
                         }
@@ -167,10 +182,10 @@ export default class queue {
 
             ret.body = "ok";
             ret.statusCode = 200;
-        }if(!receive.Messages){
+        } if (!receive.Messages) {
             ret.body = "no messages to reinyect";
         }
-        if(!queueurl){
+        if (!queueurl) {
             ret.body = "queue not found";
         }
 
