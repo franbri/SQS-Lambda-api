@@ -27,7 +27,7 @@ export default class queue {
             url: string,
             messageCount: number,
             DLurl: string,
-            DLmessageCount: number
+            DLmessageCount: string
         }[] = [];
 
         const request = await this.sqs.listQueues(params).promise();
@@ -43,7 +43,7 @@ export default class queue {
                     url: request.QueueUrls[queue],
                     messageCount: queueInfo.ApproximateNumberOfMessages,
                     DLurl: "",
-                    DLmessageCount: 0,
+                    DLmessageCount: "0",
                 }
 
                 /*get dead letter info */
@@ -57,18 +57,15 @@ export default class queue {
                         var DLqueueInfoTemp = this.getQueueInfoByURL(await this.getURLbyARN(temp.deadLetterTargetArn));
                         var DLqueueInfo = JSON.parse(await DLqueueInfoTemp);
                         info.DLurl = (await this.getURLbyARN(temp.deadLetterTargetArn));
-                        info.DLmessageCount = DLqueueInfo.ApproximateNumberOfMessages
+                        info.DLmessageCount = DLqueueInfo.ApproximateNumberOfMessages;
                     } catch {
                         console.log("bruh error");
                         console.log("end erorr");
                     }
                 } else {
-                    var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
+                    continue;
                 }
-
-
-
-                ret.push(info)
+                ret.push(info);
             }
         }
         return ret;
