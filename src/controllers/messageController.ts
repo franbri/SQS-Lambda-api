@@ -26,7 +26,7 @@ export default class messageController {
     ): Promise<APIGatewayProxyResult> {
         var messageManager = new message();
         let body = "test";
-        return messageManager.sendMessages(body);
+        return messageManager.sendMessages(queueid);
 
     }
     /*
@@ -65,5 +65,4 @@ export default class messageController {
         let queueManager = new queue();
         return queueManager.reinyect(queueid)
     }
-
 }

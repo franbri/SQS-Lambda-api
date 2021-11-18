@@ -99,10 +99,11 @@ export default class queue {
     }
 
     async getDL(queueURL: string) {
-        var attributes = JSON.parse(await this.getQueueInfoByURL(queueURL));
-        var DLURL = "";
-        if (attributes.queueInfo.RedrivePolicy) {
-            DLURL = await this.getURLbyARN(attributes.queueInfo.RedrivePolicy.deadLetterTargetArn)
+        var attributes = await this.getQueueInfoByURL(queueURL);
+        var DLURL = JSON.parse(attributes);
+        console.log(JSON.parse(DLURL.RedrivePolicy))
+        if (JSON.parse(DLURL.RedrivePolicy)) {
+            DLURL = await this.getURLbyARN(JSON.parse(DLURL.RedrivePolicy).deadLetterTargetArn)
         }
         return DLURL;
     }
@@ -136,10 +137,12 @@ export default class queue {
             statusCode: 500,
             body: "unkown error"
         }
-
-        var dl = await this.getDL(queueName);
+        console.log("f1")
+        console.log("f3")
         var queueurl = await this.getQueueURL(queueName);
+        var dl = await this.getDL(queueurl);
 
+        console.log("f2")
         var newparams = {
             AttributeNames: [
                 "SentTimestamp"
@@ -155,25 +158,39 @@ export default class queue {
 
         var receive = await this.sqs.receiveMessage(newparams).promise();
 
-        if (receive.Messages && queueurl) {
+        if (receive.Messages && queueurl && dl) {
             for (let mess in receive.Messages) {
-                if (receive.Messages[mess].Body) {
+                if (receive.Messages[mess].Body && receive.Messages[mess].ReceiptHandle) {
+                    console.log(receive.Messages)
+
                     let inparams = {
                         DelaySeconds: 10,
                         MessageBody: JSON.stringify(receive.Messages[mess].Body),
                         QueueUrl: queueurl
                     }
-                    this.sqs.sendMessage(inparams, (err, data) => {
-                        if (err) {
-                            console.log("error al reinyectar");
-                            return err;
-                        }
-                    }).send();
+
                     let deleteparams = {
                         QueueUrl: dl,
                         ReceiptHandle: JSON.stringify(receive.Messages[mess].ReceiptHandle)
                     }
-                    this.sqs.deleteMessage(deleteparams).send();
+                    try{
+                        this.sqs.sendMessage(inparams, (err, data) => {
+                            if (err) {
+                                console.log("error al reinyectar");
+                                return err;
+                            }
+                        }).send();
+                    }catch{
+                        console.log("error reading")
+                    }
+                    
+                    try{
+                        this.sqs.deleteMessage(deleteparams, (err, data) =>{
+                            console.log(data)
+                        }).send();
+                    }catch{
+                        console.log("error deleting")
+                    }
                 }
             }
 
