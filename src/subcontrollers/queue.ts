@@ -200,4 +200,24 @@ export default class queue {
         return ret;
     }
 
+    async purgeDlQueue(queueName: string) {
+        var ret = {
+            statusCode: 200,
+            body: "error"
+        }
+
+        var queueURL = await this.getQueueURL(queueName);
+        var dl = await this.getDL(queueURL);
+
+        if (queueURL && dl) {
+            var params = {
+                QueueUrl: dl
+            }
+            const purge = await this.sqs.purgeQueue(params).promise();
+            ret.body = "ok"
+            console.log("bien se purgo cola");
+        }
+        return ret;
+    }
+
 }

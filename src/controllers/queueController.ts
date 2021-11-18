@@ -78,6 +78,18 @@ export default class queueController {
         return ret;
     }
 
+    @POST("/purgeDL/{queueid}")
+    public async purgeDlQueue(
+        event: APIGatewayProxyEvent,
+        @FromPath("queueid") queueid: string
+    ): Promise<APIGatewayProxyResult> {
+
+        var sqs = new queue();
+        var ret = sqs.purgeDlQueue(queueid);
+
+        return ret;
+    }
+
 
 
 }
