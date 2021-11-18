@@ -4,6 +4,11 @@ import queue from "./queue";
 
 export default class message{
     sqs: AWS.SQS;
+    ret = {
+        statusCode: 500,
+        body: "Undefined Message Error"
+    };
+
     constructor() {
         AWS.config.update({
             region: 'us-east-2',
@@ -18,105 +23,52 @@ export default class message{
     }
 
     async listMessages(Queueid: string) {
-        //this.sendMessages(Queueid);
-        var ret = {
-            statusCode: 500,
-            body: "pong"
-        }
-        console.log(Queueid);
+        this.ret.body="Undefined listMessage error"
 
         var queueManager = new queue();
         var queueurl = await queueManager.getQueueURL(Queueid);
-
-        console.log(queueurl)
+        
         if (queueurl) {
-            var params = {
-                AttributeNames: [
-                    "SentTimestamp"
-                ],
-                MaxNumberOfMessages: 10,
-                MessageAttributeNames: [
-                    "All"
-                ],
-                QueueUrl: queueurl,
-                VisibilityTimeout: 0,
-                WaitTimeSeconds: 10
-            };
+            var params:AWS.SQS.ReceiveMessageRequest = { QueueUrl: queueurl };
+            params.AttributeNames = ["SentTimestamp"];
+            params.MaxNumberOfMessages = 10;
+            params.MessageAttributeNames = ["All"];
+            params.VisibilityTimeout = 1;
+            params.WaitTimeSeconds = 10;
 
-            const messageList = await this.sqs.receiveMessage(params).promise();
+            var messageList = await this.sqs.receiveMessage(params).promise();
+
             if(messageList.Messages){
                 let messages = JSON.stringify(messageList.Messages);
-                ret.body = messages;
-                ret.statusCode = 200;
+                this.ret.body = messages;
+                this.ret.statusCode = 200;
             }
+
         }
-        return ret
+        return this.ret
     }
 
     async sendMessages(Queueid: string) {
-        var ret = {
-            statusCode: 500,
-            body: "pong"
-        }
-
-        console.log(Queueid);
-
+        this.ret.body = "Undefined sendMessage error"
         var queueManager = new queue();
         var queueurl = await queueManager.getQueueURL(Queueid);
 
+        var date = new Date();
+        var message = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
         console.log(queueurl)
         if (queueurl) {
             var params = {
-                MessageBody: 'testing', /* required */
+                MessageBody: message, /* required */
                 QueueUrl: queueurl, /* required */
-                //DelaySeconds: 'NUMBER_VALUE',
-                // MessageAttributes: {
-                //   '<String>': {
-                //     DataType: 'STRING_VALUE', /* required */
-                //     BinaryListValues: [
-                //       Buffer.from('...') || 'STRING_VALUE' /* Strings will be Base-64 encoded on your behalf */,
-                //       /* more items */
-                //     ],
-                //     BinaryValue: Buffer.from('...') || 'STRING_VALUE' /* Strings will be Base-64 encoded on your behalf */,
-                //     StringListValues: [
-                //       'STRING_VALUE',
-                //       /* more items */
-                //     ],
-                //     StringValue: 'STRING_VALUE'
-                //   },
-                //   /* '<String>': ... */
-                // },
-                // MessageDeduplicationId: 'STRING_VALUE',
-                // MessageGroupId: 'STRING_VALUE',
-                // MessageSystemAttributes: {
-                //   '<MessageSystemAttributeNameForSends>': {
-                //     DataType: 'STRING_VALUE', /* required */
-                //     BinaryListValues: [
-                //       Buffer.from('...') || 'STRING_VALUE' /* Strings will be Base-64 encoded on your behalf */,
-                //       /* more items */
-                //     ],
-                //     BinaryValue: Buffer.from('...') || 'STRING_VALUE' /* Strings will be Base-64 encoded on your behalf */,
-                //     StringListValues: [
-                //       'STRING_VALUE',
-                //       /* more items */
-                //     ],
-                //     StringValue: 'STRING_VALUE'
-                //   },
-                //   /* '<MessageSystemAttributeNameForSends>': ... */
-                // }
               };
-            this.sqs.sendMessage(params,(err,data)=>{
-                console.log(err)
-            }).send();
-
-            /*const messageList = await this.sqs.receiveMessage(params);
-            
-            if(messageList.Messages){
-                ret.body = JSON.stringify(messageList.Messages);
-                ret.statusCode = 200;
-            }*/
+            this.sqs.sendMessage(params,(err,data) =>{
+                if(!err){
+                    this.ret.body = "ok",
+                    this.ret.statusCode = 200
+                }
+            });
         }
-        return ret
+        return this.ret
     }
 
     setMessages(QueueUrl: string){

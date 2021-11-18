@@ -152,16 +152,16 @@ export default class queue {
                 "All"
             ],
             QueueUrl: dl,
-            VisibilityTimeout: 0,
-            WaitTimeSeconds: 20
+            VisibilityTimeout: 10,
+            WaitTimeSeconds: 10
         };
 
         var receive = await this.sqs.receiveMessage(newparams).promise();
 
         if (receive.Messages && queueurl && dl) {
             for (let mess in receive.Messages) {
+                console.log(receive.Messages[mess].Body)
                 if (receive.Messages[mess].Body && receive.Messages[mess].ReceiptHandle) {
-                    console.log(receive.Messages)
 
                     let inparams = {
                         DelaySeconds: 10,
@@ -177,19 +177,13 @@ export default class queue {
                         this.sqs.sendMessage(inparams, (err, data) => {
                             if (err) {
                                 console.log("error al reinyectar");
-                                return err;
                             }
                         }).send();
-                    }catch{
-                        console.log("error reading")
-                    }
-                    
-                    try{
                         this.sqs.deleteMessage(deleteparams, (err, data) =>{
                             console.log(data)
                         }).send();
                     }catch{
-                        console.log("error deleting")
+                        console.log("error reading")
                     }
                 }
             }
