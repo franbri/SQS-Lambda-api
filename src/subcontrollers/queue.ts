@@ -132,13 +132,12 @@ export default class queue {
         return ret;
     }
 
-    public async reinyect(queueName: string) {
+    public async reinject(queueName: string) {
         var ret = {
             statusCode: 500,
             body: "unkown error"
         }
-        console.log("f1")
-        console.log("f3")
+
         var queueurl = await this.getQueueURL(queueName);
         var dl = await this.getDL(queueurl);
 
@@ -157,43 +156,45 @@ export default class queue {
         };
 
         var receive = await this.sqs.receiveMessage(newparams).promise();
-
-        if (receive.Messages && queueurl && dl) {
-            for (let mess in receive.Messages) {
-                console.log(receive.Messages[mess].Body)
-                if (receive.Messages[mess].Body && receive.Messages[mess].ReceiptHandle) {
-
-                    let inparams = {
-                        DelaySeconds: 10,
-                        MessageBody: JSON.stringify(receive.Messages[mess].Body),
-                        QueueUrl: queueurl
-                    }
-
-                    let deleteparams = {
-                        QueueUrl: dl,
-                        ReceiptHandle: JSON.stringify(receive.Messages[mess].ReceiptHandle)
-                    }
-                    try{
-                        this.sqs.sendMessage(inparams, (err, data) => {
-                            if (err) {
-                                console.log("error al reinyectar");
-                            }
-                        }).send();
-                        this.sqs.deleteMessage(deleteparams, (err, data) =>{
-                            console.log(data)
-                        }).send();
-                    }catch{
-                        console.log("error reading")
-                    }
-                }
-            }
-
+        if (receive.Messages) {
             ret.body = "ok";
             ret.statusCode = 200;
-        } if (!receive.Messages) {
+            try {
+                receive.Messages.forEach((val, ind) => {
+                    console.log(val.Body)
+                    var sendParams: AWS.SQS.SendMessageRequest = {
+                        QueueUrl: queueurl,
+                        MessageBody: val.Body + "",
+                    }
+                    var delParams: AWS.SQS.DeleteMessageRequest = {
+                        QueueUrl: dl,
+                        ReceiptHandle: val.ReceiptHandle + ""
+                    }
+                    this.sqs.sendMessage(sendParams, (err, data) => {
+                        if (err) {
+                            console.log("sending error:" + err)
+                            return
+                        }
+                        console.log(data)
+                    });
+                    this.sqs.deleteMessage(delParams, (err, data) => {
+                        if (err) {
+                            console.log("sending error:" + err);
+                            return 
+                        }
+                        console.log(data)
+                    });
+                })
+            } catch (error) {
+                console.log(error);
+            }
+
+        }
+
+        if (!receive.Messages) {
             ret.body = "no messages to reinyect";
         }
-        if (!queueurl) {
+        if (!queueurl || !dl) {
             ret.body = "queue not found";
         }
 

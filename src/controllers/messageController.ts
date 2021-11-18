@@ -57,12 +57,12 @@ export default class messageController {
 
     }
 
-    @POST("/queue/messages/reinyect/{queueid}")
-    public async reInyect(
+    @POST("/queue/messages/reinject/{queueid}")
+    public async reInject(
         event: APIGatewayProxyEvent,
         @FromPath("queueid") queueid: string,
     ): Promise<APIGatewayProxyResult> {
         let queueManager = new queue();
-        return queueManager.reinyect(queueid)
+        return queueManager.reinject(queueid)
     }
 }
