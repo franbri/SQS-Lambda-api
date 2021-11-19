@@ -61,7 +61,7 @@ export default class message{
                 MessageBody: message, /* required */
                 QueueUrl: queueurl, /* required */
               };
-            this.sqs.sendMessage(params)
+            this.sqs.sendMessage(params).send()
             this.ret.statusCode = 200
             this.ret.body = "ok"
         }
