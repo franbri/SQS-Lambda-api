@@ -1,0 +1,30 @@
+{
+  "rootDir":"../../",
+  "transform": {
+    ".ts": "ts-jest"
+  },
+  "testRegex": "tests/unit/.*\\.(test|spec).ts$",
+  "moduleFileExtensions": [
+    "ts",
+    "js",
+    "json"
+  ],
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!**/node_modules/**",
+    "!src/**/*.d.ts",
+    "!src/**/*.module.ts",
+    "!src/**/*.entity.ts",
+    "!src/**/*.type.ts",
+    "!src/ui/**",
+    "!src/app/health/**"
+  ],
+  "coveragePathIgnorePatterns": [
+    "src/server.ts",
+    "src/configuration.ts",
+    "src/typing/query-fetcher-models"
+  ],
+  "coverageReporters": [
+    "lcov"
+  ]
+}
