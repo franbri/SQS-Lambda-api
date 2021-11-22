@@ -20,7 +20,7 @@ jobs:
       with:
           node-version: 14.x
     - name: Install dependencies, Build application and Zip dist folder contents
-      run: npm install && npm run build && test 
+      run: npm install && npm run build && npm jest 
     - name: default deploy
       uses: appleboy/lambda-action@master
       with:
