@@ -4,6 +4,12 @@ import queue from "./queue";
 
 export default class message{
     sqs: AWS.SQS;
+    ret = {
+        statusCode: 500,
+        body: "Undefined Message Error"
+    };
+
+
     constructor() {
         AWS.config.update({
             region: 'us-east-2',
@@ -18,38 +24,55 @@ export default class message{
     }
 
     async listMessages(Queueid: string) {
-        var ret = {
-            statusCode: 400,
-            body: "pong"
-        }
+        this.ret.body="Undefined listMessage error"
 
-        var Qman = new queue();
-        var queueurl = await Qman.getQueueURL(Queueid);
-
-        console.log(queueurl)
-        if (queueurl.QueueUrl) {
-            var params = {
-                AttributeNames: [
-                    "SentTimestamp"
-                ],
-                MaxNumberOfMessages: 10,
-                MessageAttributeNames: [
-                    "All"
-                ],
-                QueueUrl: queueurl.QueueUrl,
-                VisibilityTimeout: 0,
-                WaitTimeSeconds: 20
-            };
-
-            const run = await this.sqs.receiveMessage(params).promise();
-            ret.body = JSON.stringify(run.Messages)
-        }
+        var queueManager = new queue();
+        var queueurl = await queueManager.getQueueURL(Queueid);
         
-        return ret
+        if (queueurl) {
+            var params:AWS.SQS.ReceiveMessageRequest = { QueueUrl: queueurl };
+            params.AttributeNames = ["SentTimestamp"];
+            params.MaxNumberOfMessages = 10;
+            params.MessageAttributeNames = ["All"];
+            params.VisibilityTimeout = 10;
+            params.WaitTimeSeconds = 20;
+
+            var messageList = await this.sqs.receiveMessage(params).promise();
+
+            if(messageList.Messages){
+                let messages = JSON.stringify(messageList.Messages);
+                this.ret.body = messages;
+                this.ret.statusCode = 200;
+            }
+
+        }
+        return this.ret
+    }
+
+    async sendMessages(Queueid: string) {
+        this.ret.body = "Undefined sendMessage error"
+        var queueManager = new queue();
+        var queueurl = await queueManager.getQueueURL(Queueid);
+
+        var date = new Date();
+        var message = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+        console.log(queueurl)
+        if (queueurl) {
+            var params = {
+                MessageBody: message, /* required */
+                QueueUrl: queueurl, /* required */
+              };
+            this.sqs.sendMessage(params).send()
+            this.ret.statusCode = 200
+            this.ret.body = "ok"
+        }
+        return this.ret
+
     }
 
     setMessages(QueueUrl: string){
         throw new Error("Method not implemented.");
-    }
+    }       
+
 
 }
