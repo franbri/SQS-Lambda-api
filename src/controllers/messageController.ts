@@ -4,6 +4,7 @@ import { Controller, GET, Use, Schedule, POST, DELETE, FromPath, SQS } from "lam
 import message from "../subcontrollers/message";
 import queue from "../subcontrollers/queue";
 
+
 @Controller()
 export default class messageController {
     /**
@@ -17,6 +18,7 @@ export default class messageController {
     ): Promise<APIGatewayProxyResult> {
         var messages = new message();
         return await messages.listMessages(queueid);
+
     }
 
     @POST("/queue/messages/add/{queueid}")
@@ -27,6 +29,7 @@ export default class messageController {
         var messageManager = new message();
         let body = "test";
         return messageManager.sendMessages(queueid);
+
 
     }
     /*
@@ -64,5 +67,6 @@ export default class messageController {
     ): Promise<APIGatewayProxyResult> {
         let queueManager = new queue();
         return queueManager.reinject(queueid)
+
     }
 }

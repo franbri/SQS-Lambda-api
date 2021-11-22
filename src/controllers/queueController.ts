@@ -14,6 +14,7 @@ export default class queueController {
         console.log(ret);
 
         return {
+
             statusCode: 200,
             body: JSON.stringify(ret)
         }
@@ -36,6 +37,7 @@ export default class queueController {
         }
         return ret;
     }
+
     /*
     @GET("/group/{GroupName}")
     public getQueueGroup(event: APIGatewayProxyEvent): APIGatewayProxyResult {
@@ -89,6 +91,7 @@ export default class queueController {
 
         return ret;
     }
+
 
 
 

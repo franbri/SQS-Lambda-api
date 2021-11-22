@@ -9,6 +9,7 @@ export default class message{
         body: "Undefined Message Error"
     };
 
+
     constructor() {
         AWS.config.update({
             region: 'us-east-2',
@@ -66,10 +67,12 @@ export default class message{
             this.ret.body = "ok"
         }
         return this.ret
+
     }
 
     setMessages(QueueUrl: string){
         throw new Error("Method not implemented.");
     }       
+
 
 }
