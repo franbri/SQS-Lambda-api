@@ -25,7 +25,7 @@ export default class queue {
         var ret: {
             name: string,
             url: string,
-            messageCount: string | undefined,
+            messageCount: string,
             DLurl: string,
             DLmessageCount: string
         }[] = [];
@@ -35,13 +35,12 @@ export default class queue {
         if (request.QueueUrls) {
             console.log(request.QueueUrls);
             for (let queue of request.QueueUrls) {
-                let queueInfoTemp = await this.getQueueInfoByURL(queue);
-                let queueInfo = queueInfoTemp;
+                let queueInfo = await this.getQueueInfoByURL(queue);
 
                 let info = {
                     name: queue.split("/").slice(-1)[0],
                     url: queue,
-                    messageCount: queueInfo.Attributes?.ApproximateNumberOfMessages,
+                    messageCount: queueInfo.Attributes!.ApproximateNumberOfMessages,
                     DLurl: "",
                     DLmessageCount: "0",
                 }
@@ -49,13 +48,14 @@ export default class queue {
                 /*get dead letter info */
                 if (queueInfo.Attributes) {
                     try {
-                        console.log(queueInfo.Attributes.RedrivePolicy)
-                        let temp = queueInfo.Attributes.RedrivePolicy;
-                        /*console.log(this.getURLbyARN(temp.deadLetterTargetArn));
+                        let temp = JSON.parse(queueInfo.Attributes.RedrivePolicy);
+                        console.log(this.getURLbyARN(temp.deadLetterTargetArn));
                         var DLqueueInfoTemp = this.getQueueInfoByURL(await this.getURLbyARN(temp.deadLetterTargetArn));
+                        /*
                         var DLqueueInfo = JSON.parse(await DLqueueInfoTemp);
                         info.DLurl = (await this.getURLbyARN(temp.deadLetterTargetArn));
-                        info.DLmessageCount = DLqueueInfo.ApproximateNumberOfMessages;*/
+                        info.DLmessageCount = DLqueueInfo.ApproximateNumberOfMessages;
+                        */
                     } catch {
                         console.log("bruh error");
                         console.log("end erorr");
@@ -80,7 +80,6 @@ export default class queue {
         }
 
         return name;
-
     }
 
     async getQueueInfoByURL(url: string):Promise<AWS.SQS.GetQueueAttributesResult> {
@@ -97,8 +96,8 @@ export default class queue {
         const attributes = await this.getQueueInfoByURL(queueURL);
         let deadLetterURL = ""
 
-        if (attributes.Attributes?.RedrivePolicy) {
-            deadLetterURL = JSON.parse(attributes.Attributes?.RedrivePolicy).deadLetterTargetArn
+        if (attributes.Attributes!.RedrivePolicy) {
+            deadLetterURL = JSON.parse(attributes.Attributes!.RedrivePolicy).deadLetterTargetArn
             
         }
         return deadLetterURL
