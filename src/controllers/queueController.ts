@@ -32,7 +32,7 @@ export default class queueController {
         var url = await sqs.getQueueURL(queueid);
 
         if(url){
-            ret.body = await sqs.getQueueInfoByURL(url);
+            ret.body = JSON.stringify(await sqs.getQueueInfoByURL(url));
         }
         return ret;
     }

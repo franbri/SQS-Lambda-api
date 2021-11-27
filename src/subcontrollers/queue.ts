@@ -25,7 +25,7 @@ export default class queue {
         var ret: {
             name: string,
             url: string,
-            messageCount: number,
+            messageCount: string | undefined,
             DLurl: string,
             DLmessageCount: string
         }[] = [];
@@ -34,30 +34,28 @@ export default class queue {
 
         if (request.QueueUrls) {
             console.log(request.QueueUrls);
-            for (let queue in request.QueueUrls) {
-                let queueInfoTemp = await this.getQueueInfoByURL(request.QueueUrls[queue]);
-                let queueInfo = JSON.parse(queueInfoTemp);
+            for (let queue of request.QueueUrls) {
+                let queueInfoTemp = await this.getQueueInfoByURL(queue);
+                let queueInfo = queueInfoTemp;
 
                 let info = {
-                    name: request.QueueUrls[queue].split("/").slice(-1)[0],
-                    url: request.QueueUrls[queue],
-                    messageCount: queueInfo.ApproximateNumberOfMessages,
+                    name: queue.split("/").slice(-1)[0],
+                    url: queue,
+                    messageCount: queueInfo.Attributes?.ApproximateNumberOfMessages,
                     DLurl: "",
                     DLmessageCount: "0",
                 }
 
                 /*get dead letter info */
-
-                if (queueInfo.RedrivePolicy) {
+                if (queueInfo.Attributes) {
                     try {
-                        let temp = JSON.parse(queueInfo.RedrivePolicy);
-                        console.log(temp)
-                        console.log(temp.deadLetterTargetArn)
-                        console.log(this.getURLbyARN(temp.deadLetterTargetArn));
+                        console.log(queueInfo.Attributes.RedrivePolicy)
+                        let temp = queueInfo.Attributes.RedrivePolicy;
+                        /*console.log(this.getURLbyARN(temp.deadLetterTargetArn));
                         var DLqueueInfoTemp = this.getQueueInfoByURL(await this.getURLbyARN(temp.deadLetterTargetArn));
                         var DLqueueInfo = JSON.parse(await DLqueueInfoTemp);
                         info.DLurl = (await this.getURLbyARN(temp.deadLetterTargetArn));
-                        info.DLmessageCount = DLqueueInfo.ApproximateNumberOfMessages;
+                        info.DLmessageCount = DLqueueInfo.ApproximateNumberOfMessages;*/
                     } catch {
                         console.log("bruh error");
                         console.log("end erorr");
@@ -85,28 +83,27 @@ export default class queue {
 
     }
 
-    async getQueueInfoByURL(url: string | undefined) {
-        if (!url) {
-            return "";
-        }
+    async getQueueInfoByURL(url: string):Promise<AWS.SQS.GetQueueAttributesResult> {
         var params = {
             QueueUrl: url, /* required */
             AttributeNames: ["All"/*"deadLetterTargetArn"*/]
         }
 
         const attrib = await this.sqs.getQueueAttributes(params).promise();
-        return JSON.stringify(attrib.Attributes);
+        return attrib;
     }
 
-    async getDL(queueURL: string) {
-        var attributes = await this.getQueueInfoByURL(queueURL);
-        var DLURL = JSON.parse(attributes);
-        console.log(JSON.parse(DLURL.RedrivePolicy))
-        if (JSON.parse(DLURL.RedrivePolicy)) {
-            DLURL = await this.getURLbyARN(JSON.parse(DLURL.RedrivePolicy).deadLetterTargetArn)
+    async getDeadLetterURL(queueURL: string):Promise<string> {
+        const attributes = await this.getQueueInfoByURL(queueURL);
+        let deadLetterURL = ""
+
+        if (attributes.Attributes?.RedrivePolicy) {
+            deadLetterURL = JSON.parse(attributes.Attributes?.RedrivePolicy).deadLetterTargetArn
+            
         }
-        return DLURL;
+        return deadLetterURL
     }
+    
 
     getURLbyARN(arn: string) {
         var name = arn.split(':');
@@ -139,7 +136,7 @@ export default class queue {
         }
 
         var queueurl = await this.getQueueURL(queueName);
-        var dl = await this.getDL(queueurl);
+        var dl = await this.getDeadLetterURL(queueurl);
 
         console.log("f2")
         var newparams = {
@@ -160,31 +157,19 @@ export default class queue {
             ret.body = "ok";
             ret.statusCode = 200;
             try {
-                receive.Messages.forEach((val, ind) => {
+                for (let val of receive.Messages) {
                     console.log(val.Body)
                     var sendParams: AWS.SQS.SendMessageRequest = {
                         QueueUrl: queueurl,
                         MessageBody: val.Body + "",
                     }
                     var delParams: AWS.SQS.DeleteMessageRequest = {
-                        QueueUrl: dl,
+                        QueueUrl: dl ,
                         ReceiptHandle: val.ReceiptHandle + ""
                     }
-                    this.sqs.sendMessage(sendParams, (err, data) => {
-                        if (err) {
-                            console.log("sending error:" + err)
-                            return
-                        }
-                        console.log(data)
-                    });
-                    this.sqs.deleteMessage(delParams, (err, data) => {
-                        if (err) {
-                            console.log("sending error:" + err);
-                            return 
-                        }
-                        console.log(data)
-                    });
-                })
+                    await this.sqs.sendMessage(sendParams).promise();
+                    await this.sqs.deleteMessage(delParams).promise();
+                }
             } catch (error) {
                 console.log(error);
             }
@@ -201,14 +186,15 @@ export default class queue {
         return ret;
     }
 
-    async purgeDlQueue(queueName: string) {
+   async purgeDlQueue(queueName: string) {
         var ret = {
             statusCode: 200,
             body: "error"
         }
 
         var queueURL = await this.getQueueURL(queueName);
-        var dl = await this.getDL(queueURL);
+        var dl = await this.getDeadLetterURL(queueURL);
+
 
         if (queueURL && dl) {
             var params = {
