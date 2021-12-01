@@ -36,7 +36,7 @@ export default class message{
             params.MaxNumberOfMessages = 10;
             params.MessageAttributeNames = ["All"];
             params.VisibilityTimeout = 3;
-            params.WaitTimeSeconds = 20;
+            params.WaitTimeSeconds = 10;
 
             let messageList = await this.sqs.receiveMessage(params).promise();
 
