@@ -25,13 +25,13 @@ export default class queue {
         var ret: {
             name: string,
             url: string,
-            messageCount: string,
+            messageCount: number,
             DLurl: string,
             DLmessageCount: string
         }[] = [];
 
         const request = await this.sqs.listQueues(params).promise();
-        
+
         if (request.QueueUrls) {
             console.log(request.QueueUrls);
             for (let queue in request.QueueUrls) {
@@ -43,13 +43,14 @@ export default class queue {
                     let temp = JSON.parse(queueInfo.RedrivePolicy);
                     var deadLetterURL = await this.getQueueURL((temp.deadLetterTargetArn).split(":").slice(-1)[0])
 
-                    let DLqueueInfoTemp = await this.getQueueInfoByURL(deadLetterURL.QueueUrl);
+                    let DLqueueInfoTemp = await this.getQueueInfoByURL(deadLetterURL);
                     var DLqueueInfo = JSON.parse(DLqueueInfoTemp);
+
                     ret.push({
                         name: request.QueueUrls[queue].split("/").slice(-1)[0],
                         url: request.QueueUrls[queue],
                         messageCount: queueInfo.ApproximateNumberOfMessages,
-                        DLurl: deadLetterURL.QueueUrl!,
+                        DLurl: deadLetterURL,
                         DLmessageCount: DLqueueInfo.ApproximateNumberOfMessages,
                     })
                 } /*else {
@@ -62,17 +63,21 @@ export default class queue {
     }
 
     async getQueueURL(id: string) {
+        var name = "";
         var paramsName = {
             QueueName: id /* required */
         };
-        var name = this.sqs.getQueueUrl(paramsName).promise();
+        var QueueURL = await this.sqs.getQueueUrl(paramsName).promise();
+        if (QueueURL.QueueUrl) {
+            name = QueueURL.QueueUrl;
+        }
 
         return name;
 
     }
 
-    async getQueueInfoByURL(url: string|undefined) {
-        if (!url){
+    async getQueueInfoByURL(url: string | undefined) {
+        if (!url) {
             return "";
         }
         var params = {
@@ -84,18 +89,19 @@ export default class queue {
         return JSON.stringify(attrib.Attributes);
     }
 
-    async getDL(queueURL:string){
-        var attributes = JSON.parse(await this.getQueueInfoByURL(queueURL));
-        var DLURL;
-        if(attributes.queueInfo.RedrivePolicy){
-            DLURL = this.getURLbyARN(attributes.queueInfo.RedrivePolicy.deadLetterTargetArn)
+    async getDL(queueURL: string) {
+        var attributes = await this.getQueueInfoByURL(queueURL);
+        var DLURL = JSON.parse(attributes);
+        console.log(JSON.parse(DLURL.RedrivePolicy))
+        if (JSON.parse(DLURL.RedrivePolicy)) {
+            DLURL = await this.getURLbyARN(JSON.parse(DLURL.RedrivePolicy).deadLetterTargetArn)
         }
         return DLURL;
     }
 
-    async getURLbyARN(arn:string){
-        var name = arn.split(':')[-1]
-        return this.getQueueURL(name);
+    getURLbyARN(arn: string) {
+        var name = arn.split(':');
+        return this.getQueueURL(name[name.length - 1]);
     }
 
     async purgeQueue(queueName: string) {
@@ -106,9 +112,9 @@ export default class queue {
 
         var queueURL = await this.getQueueURL(queueName);
 
-        if (queueURL.QueueUrl) {
+        if (queueURL) {
             var params = {
-                QueueUrl: queueURL.QueueUrl
+                QueueUrl: queueURL
             }
             const purge = await this.sqs.purgeQueue(params).promise();
             ret.body = "ok"
@@ -117,23 +123,93 @@ export default class queue {
         return ret;
     }
 
-    public async reinyect(queueName: string){
+    public async reinject(queueName: string) {
+        var ret = {
+            statusCode: 500,
+            body: "unkown error"
+        }
+
+        var queueurl = await this.getQueueURL(queueName);
+        var dl = await this.getDL(queueurl);
+
+        console.log("f2")
+        var newparams = {
+            AttributeNames: [
+                "SentTimestamp"
+            ],
+            MaxNumberOfMessages: 10,
+            MessageAttributeNames: [
+                "All"
+            ],
+            QueueUrl: dl,
+            VisibilityTimeout: 10,
+            WaitTimeSeconds: 10
+        };
+
+        var receive = await this.sqs.receiveMessage(newparams).promise();
+        if (receive.Messages) {
+            ret.body = "ok";
+            ret.statusCode = 200;
+            try {
+                receive.Messages.forEach((val, ind) => {
+                    console.log(val.Body)
+                    var sendParams: AWS.SQS.SendMessageRequest = {
+                        QueueUrl: queueurl,
+                        MessageBody: val.Body + "",
+                    }
+                    var delParams: AWS.SQS.DeleteMessageRequest = {
+                        QueueUrl: dl,
+                        ReceiptHandle: val.ReceiptHandle + ""
+                    }
+                    this.sqs.sendMessage(sendParams, (err, data) => {
+                        if (err) {
+                            console.log("sending error:" + err)
+                            return
+                        }
+                        console.log(data)
+                    });
+                    this.sqs.deleteMessage(delParams, (err, data) => {
+                        if (err) {
+                            console.log("sending error:" + err);
+                            return 
+                        }
+                        console.log(data)
+                    });
+                })
+            } catch (error) {
+                console.log(error);
+            }
+
+        }
+
+        if (!receive.Messages) {
+            ret.body = "no messages to reinyect";
+        }
+        if (!queueurl || !dl) {
+            ret.body = "queue not found";
+        }
+
+        return ret;
+    }
+
+    async purgeDlQueue(queueName: string) {
         var ret = {
             statusCode: 200,
             body: "error"
         }
 
         var queueURL = await this.getQueueURL(queueName);
+        var dl = await this.getDL(queueURL);
 
-        if (queueURL.QueueUrl) {
-            var DLURL = await this.getDL(queueURL.QueueUrl);
-            var mess = new message();
-            if (DLURL){
-                mess.mvMessage(queueURL.QueueUrl)
-                ret.body = "ok"
-                console.log("bien se reinyecto cola");
+        if (queueURL && dl) {
+            var params = {
+                QueueUrl: dl
             }
+            const purge = await this.sqs.purgeQueue(params).promise();
+            ret.body = "ok"
+            console.log("bien se purgo cola");
         }
         return ret;
     }
+
 }

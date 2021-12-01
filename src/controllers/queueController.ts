@@ -12,6 +12,7 @@ export default class queueController {
         var sqs = new queue();
         var ret = await sqs.listQueues();
         console.log(ret);
+
         return {
 
             statusCode: 200,
@@ -23,16 +24,16 @@ export default class queueController {
     public async getQueueInfoByID(event: APIGatewayProxyEvent, @FromPath("queueid") queueid: string): Promise<APIGatewayProxyResult> {
 
         var ret = {
-            statusCode: 200,
+            statusCode: 500,
             body: "error"
         }
 
 
         var sqs = new queue();
-        var name = await sqs.getQueueURL(queueid);
+        var url = await sqs.getQueueURL(queueid);
 
-        if(name){
-            ret.body = await sqs.getQueueInfoByURL(name.QueueUrl);
+        if(url){
+            ret.body = await sqs.getQueueInfoByURL(url);
         }
         return ret;
     }
@@ -78,6 +79,19 @@ export default class queueController {
 
         return ret;
     }
+
+    @POST("/purgeDL/{queueid}")
+    public async purgeDlQueue(
+        event: APIGatewayProxyEvent,
+        @FromPath("queueid") queueid: string
+    ): Promise<APIGatewayProxyResult> {
+
+        var sqs = new queue();
+        var ret = sqs.purgeDlQueue(queueid);
+
+        return ret;
+    }
+
 
 
 
