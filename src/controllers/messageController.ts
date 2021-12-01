@@ -30,8 +30,6 @@ export default class messageController {
         var messageManager = new message();
         let body = JSON.parse(event.body!);
         return messageManager.sendMessages(queueid, body.messageBody);
-
-
     }
     /*
     @POST("/queue/messages/mv/{src-queueid}/{dst-queueid}")
