@@ -50,13 +50,15 @@ export default class message{
         return this.ret
     }
 
-    async sendMessages(Queueid: string) {
+    async sendMessages(Queueid: string, message:string|undefined) {
         this.ret.body = "Undefined sendMessage error"
         var queueManager = new queue();
         var queueurl = await queueManager.getQueueURL(Queueid);
 
         var date = new Date();
-        var message = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+        if (!message){
+            message = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+        }
         console.log(queueurl)
         if (queueurl) {
             var params = {

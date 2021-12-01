@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda"
 import { Controller, GET, Use, Schedule, POST, DELETE, FromPath, SQS, FromBody } from "lambaa"
+import { EventEmitter } from "stream";
 
 import message from "../subcontrollers/message";
 import queue from "../subcontrollers/queue";
@@ -27,8 +28,8 @@ export default class messageController {
         @FromPath("queueid") queueid: string
     ): Promise<APIGatewayProxyResult> {
         var messageManager = new message();
-        let body = "test";
-        return messageManager.sendMessages(queueid);
+        let body = JSON.parse(event.body!);
+        return messageManager.sendMessages(queueid, body.messageBody);
 
 
     }
