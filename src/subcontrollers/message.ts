@@ -1,4 +1,5 @@
 import AWS from "aws-sdk";
+import { AquaStatus } from "aws-sdk/clients/redshift";
 import 'dotenv/config';
 import queue from "./queue";
 
@@ -68,6 +69,29 @@ export default class message{
         }
         return this.ret
 
+    }
+
+    async rmMessage(Queueid:string, ReceiptHandle:string){
+        var queueManager = new queue();
+        var queueurl = await queueManager.getQueueURL(Queueid);
+
+        let params:AWS.SQS.DeleteMessageRequest ={
+            QueueUrl: queueurl,
+            ReceiptHandle: ReceiptHandle
+        }
+        console.log(ReceiptHandle)
+        try{
+            let status = this.sqs.deleteMessage(params).promise()
+            this.ret.body = "ok"
+            this.ret.statusCode = 200
+
+        }catch{
+            this.ret.body = "general delete error"
+        }
+
+
+
+        return this.ret
     }
 
     setMessages(QueueUrl: string){

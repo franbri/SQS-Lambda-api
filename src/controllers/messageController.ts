@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda"
-import { Controller, GET, Use, Schedule, POST, DELETE, FromPath, SQS } from "lambaa"
+import { Controller, GET, Use, Schedule, POST, DELETE, FromPath, SQS, FromBody } from "lambaa"
 
 import message from "../subcontrollers/message";
 import queue from "../subcontrollers/queue";
@@ -44,20 +44,16 @@ export default class messageController {
     }
     */
 
-    @DELETE("/queue/messages/rm/{queueid}/{messageid}")
+    @POST("/queue/messages/rm/{queueid}")
     public async rmMessage(
         event: APIGatewayProxyEvent,
         @FromPath("queueid") queueid: string,
-        @FromPath("messageid") messageid: string
     ): Promise<APIGatewayProxyResult> {
 
-
-        return {
-            statusCode: 200,
-            body: "pong"
-        }
-
-
+        var messages = new message();
+        let body = JSON.parse(event.body!);
+        return messages.rmMessage(queueid, body.ReceiptHandle);
+        
     }
 
     @POST("/queue/messages/reinject/{queueid}")
