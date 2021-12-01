@@ -37,23 +37,25 @@ export default class queue {
             for (let queue in request.QueueUrls) {
                 let queueInfoTemp = await this.getQueueInfoByURL(request.QueueUrls[queue]);
                 let queueInfo = JSON.parse(queueInfoTemp);
-
+                
                 /*get dead letter info */
-                if (false/*queueInfo.RedrivePolicy*/) {
+                if (queueInfo.RedrivePolicy) {
                     let temp = JSON.parse(queueInfo.RedrivePolicy);
-                    let DLqueueInfoTemp = await this.getQueueInfoByURL((await this.getQueueURL(temp.deadLetterTargetArn)).QueueUrl);
-                    var DLqueueInfo = JSON.parse(DLqueueInfoTemp);
-                } else {
-                    var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
-                }
+                    var deadLetterURL = await this.getQueueURL((temp.deadLetterTargetArn).split(":").slice(-1)[0])
 
-                ret.push({
-                    name: request.QueueUrls[queue].split("/").slice(-1)[0],
-                    url: request.QueueUrls[queue],
-                    messageCount: queueInfo.ApproximateNumberOfMessages,
-                    DLurl: "",
-                    DLmessageCount: DLqueueInfo.ApproximateNumberOfMessages,
-                })
+                    let DLqueueInfoTemp = await this.getQueueInfoByURL(deadLetterURL.QueueUrl);
+                    var DLqueueInfo = JSON.parse(DLqueueInfoTemp);
+                    ret.push({
+                        name: request.QueueUrls[queue].split("/").slice(-1)[0],
+                        url: request.QueueUrls[queue],
+                        messageCount: queueInfo.ApproximateNumberOfMessages,
+                        DLurl: deadLetterURL.QueueUrl!,
+                        DLmessageCount: DLqueueInfo.ApproximateNumberOfMessages,
+                    })
+                } /*else {
+                    var DLqueueInfo = JSON.parse('{"approximateNumberOfMessages": 0}');
+                }*/
+
             }
         }
         return ret;
