@@ -27,18 +27,18 @@ export default class message{
     async listMessages(Queueid: string) {
         this.ret.body="Undefined listMessage error"
 
-        var queueManager = new queue();
-        var queueurl = await queueManager.getQueueURL(Queueid);
+        let queueManager = new queue();
+        let queueurl = await queueManager.getQueueURL(Queueid);
         
         if (queueurl) {
-            var params:AWS.SQS.ReceiveMessageRequest = { QueueUrl: queueurl };
+            let params:AWS.SQS.ReceiveMessageRequest = { QueueUrl: queueurl };
             params.AttributeNames = ["SentTimestamp"];
             params.MaxNumberOfMessages = 10;
             params.MessageAttributeNames = ["All"];
-            params.VisibilityTimeout = 10;
+            params.VisibilityTimeout = 0;
             params.WaitTimeSeconds = 20;
 
-            var messageList = await this.sqs.receiveMessage(params).promise();
+            let messageList = await this.sqs.receiveMessage(params).promise();
 
             if(messageList.Messages){
                 let messages = JSON.stringify(messageList.Messages);
@@ -52,30 +52,36 @@ export default class message{
 
     async sendMessages(Queueid: string, message:string|undefined) {
         this.ret.body = "Undefined sendMessage error"
-        var queueManager = new queue();
-        var queueurl = await queueManager.getQueueURL(Queueid);
+        let queueManager = new queue();
+        let queueurl = await queueManager.getQueueURL(Queueid);
 
-        var date = new Date();
+        let date = new Date();
         if (!message){
             message = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
         }
         console.log(queueurl)
         if (queueurl) {
-            var params = {
+            let params = {
                 MessageBody: message, /* required */
                 QueueUrl: queueurl, /* required */
               };
-            this.sqs.sendMessage(params).send()
-            this.ret.statusCode = 200
-            this.ret.body = "ok"
+
+            try{
+                let sendConfirm = await this.sqs.sendMessage(params).promise()
+                this.ret.statusCode = 200
+                this.ret.body = sendConfirm.MessageId!
+            }catch(err:any){
+                this.ret.body = err.message
+            }
+            
         }
         return this.ret
 
     }
 
     async rmMessage(Queueid:string, ReceiptHandle:string){
-        var queueManager = new queue();
-        var queueurl = await queueManager.getQueueURL(Queueid);
+        let queueManager = new queue();
+        let queueurl = await queueManager.getQueueURL(Queueid);
 
         let params:AWS.SQS.DeleteMessageRequest ={
             QueueUrl: queueurl,
@@ -83,10 +89,10 @@ export default class message{
         }
         console.log(ReceiptHandle)
         try{
-            let status = this.sqs.deleteMessage(params).promise()
+            let status =await this.sqs.deleteMessage(params).promise()
+            status.$response
             this.ret.body = "ok"
             this.ret.statusCode = 200
-
         }catch{
             this.ret.body = "general delete error"
         }
