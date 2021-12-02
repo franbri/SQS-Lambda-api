@@ -33,18 +33,26 @@ export default class message{
         if (queueurl) {
             let params:AWS.SQS.ReceiveMessageRequest = { QueueUrl: queueurl };
             params.AttributeNames = ["SentTimestamp"];
-            params.MaxNumberOfMessages = 10;
-            params.MessageAttributeNames = ["All"];
-            params.VisibilityTimeout = 3;
-            params.WaitTimeSeconds = 10;
+            params.MaxNumberOfMessages = 5;
+            //params.MessageAttributeNames = ["All"];
+            params.VisibilityTimeout = 10;
+            params.WaitTimeSeconds = 2;
+            
+            let messages: AWS.SQS.MessageList = []
 
-            let messageList = await this.sqs.receiveMessage(params).promise();
-
-            if(messageList.Messages){
-                let messages = JSON.stringify(messageList.Messages);
-                this.ret.body = messages;
-                this.ret.statusCode = 200;
-            }
+            for (let i = 0; i < 5; i++) {
+                let messageList = await this.sqs.receiveMessage(params).promise();
+                
+                if(messageList.Messages){
+                    for(let x of messageList.Messages){
+                        console.log(x.Body)
+                        messages.push(x);
+                    }
+                    //let messages = JSON.stringify(messageList.Messages);
+                    this.ret.body = JSON.stringify(messages);
+                    this.ret.statusCode = 200;
+                }
+              }
 
         }
         return this.ret
@@ -57,7 +65,10 @@ export default class message{
 
         let date = new Date();
         if (!message){
+            console.log(message)
             message = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+            console.log(message)
+
         }
         console.log(queueurl)
         if (queueurl) {
