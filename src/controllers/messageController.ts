@@ -31,17 +31,7 @@ export default class messageController {
         let body = JSON.parse(event.body!);
         return messageManager.sendMessages(queueid, body.messageBody);
     }
-    /*
-    @POST("/queue/messages/mv/{src-queueid}/{dst-queueid}")
-    public mvMessage(
-        event: APIGatewayProxyEvent
-    ): APIGatewayProxyResult {
-        return {
-            statusCode: 200,
-            body: "Retorno mensage",
-        }
-    }
-    */
+
 
     @POST("/queue/messages/rm/{queueid}")
     public async rmMessage(
